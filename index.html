@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpecimenB — Distribution Made Easy</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #050507;
+  --bg2: #0d0d12;
+  --green: #a3e635;
+  --cyan: #22d3ee;
+  --purple: #8b5cf6;
+  --red: #ef4444;
+  --text: #f5f5f5;
+  --text2: #8888a0;
+  --border: rgba(255,255,255,0.15);
+  --border-hover: rgba(163,230,53,0.4);
+  --panel-bg: rgba(255,255,255,0.05);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============ SCANLINES ============ */
+.scanlines {
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(163,230,53,0.015) 2px, rgba(163,230,53,0.015) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+/* ============ NAVBAR ============ */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: 56px;
+  background: rgba(5,5,7,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.nav-logo svg { width: 32px; height: 32px; border-radius: 4px; }
+.nav-logo .brand {
+  font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;
+  letter-spacing: 0.1em; color: var(--text);
+}
+.nav-logo .tagline {
+  font-family: 'JetBrains Mono', monospace; font-size: 8px;
+  color: var(--text2); letter-spacing: 0.2em; text-transform: uppercase;
+}
+
+.nav-links { display: flex; gap: 4px; }
+.nav-links a {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text2); text-decoration: none; padding: 6px 10px;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.nav-links a:hover { color: var(--green); }
+
+.nav-wallet { display: flex; align-items: center; gap: 8px; }
+
+.status-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border: 1px solid rgba(163,230,53,0.3);
+  background: rgba(163,230,53,0.05);
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: var(--green); text-transform: uppercase; letter-spacing: 0.15em;
+}
+.pulse-dot {
+  width: 6px; height: 6px; background: var(--green); border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.wallet-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border: 1px solid rgba(163,230,53,0.3);
+  background: rgba(163,230,53,0.05);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--green); cursor: pointer;
+}
+.wallet-btn:active { background: rgba(163,230,53,0.15); }
+
+/* Token dropdown */
+.token-selector {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px; border: 1px solid rgba(34,211,238,0.3);
+  background: rgba(34,211,238,0.05);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--cyan); cursor: pointer;
+}
+.token-menu {
+  display: none; position: absolute; top: 100%; right: 0; margin-top: 4px;
+  width: 300px; background: var(--bg2); border: 1px solid var(--border);
+  z-index: 200; max-height: 300px; overflow-y: auto;
+}
+.token-menu.active { display: block; }
+.token-item {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.token-item:hover { background: rgba(255,255,255,0.05); }
+.token-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(139,92,246,0.2));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--cyan);
+}
+.token-symbol { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); }
+.token-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); }
+.token-balance { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--green); }
+
+/* ============ HERO ============ */
+.hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 56px; }
+.hero-content { max-width: 900px; width: 100%; padding: 32px 20px; }
+.hero-status { display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; }
+.status-pill {
+  display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+  border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em;
+}
+.status-pill.green { border-color: rgba(163,230,53,0.3); background: rgba(163,230,53,0.05); color: var(--green); }
+.status-pill.cyan { border-color: rgba(34,211,238,0.3); background: rgba(34,211,238,0.05); color: var(--cyan); }
+
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(42px, 12vw, 96px); color: var(--text);
+  line-height: 1; margin-bottom: 12px;
+  text-shadow: 0 0 40px rgba(163,230,53,0.25);
+}
+.hero .tagline {
+  font-family: 'DM Serif Display', serif; font-style: italic;
+  font-size: clamp(18px, 4vw, 28px); color: var(--text2); margin-bottom: 20px;
+}
+.hero-desc {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  color: var(--text2); line-height: 1.7; margin-bottom: 12px;
+}
+.hero-cmd {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--cyan); opacity: 0.6; margin-bottom: 32px;
+}
+.hero-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
+
+.btn-primary {
+  display: flex; align-items: center; gap: 8px; padding: 14px 28px;
+  background: var(--green); color: var(--bg);
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  border: none; cursor: pointer; text-decoration: none;
+}
+.btn-secondary {
+  display: flex; align-items: center; gap: 8px; padding: 14px 28px;
+  border: 1px solid var(--border); background: transparent; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  cursor: pointer; text-decoration: none;
+}
+.btn-secondary:active { border-color: var(--green); color: var(--green); }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 768px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+.stat-card { padding: 16px; border: 1px solid var(--border); background: var(--panel-bg); }
+.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: var(--text); }
+.stat-unit { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); margin-left: 4px; }
+.stat-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+
+/* ============ SECTIONS ============ */
+.section { padding: 60px 16px; max-width: 1200px; margin: 0 auto; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--cyan); opacity: 0.6; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 12px;
+}
+.section h2 { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(28px, 6vw, 52px); color: var(--text); margin-bottom: 12px; }
+.section-desc { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); line-height: 1.7; max-width: 500px; margin-bottom: 32px; }
+
+/* ============ MODULES ============ */
+.modules-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 640px) { .modules-grid { grid-template-columns: repeat(2, 1fr); } }
+.module-card { padding: 20px; border: 1px solid var(--border); background: var(--panel-bg); }
+.module-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--cyan); opacity: 0.6; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 12px; }
+.module-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); margin-bottom: 12px; }
+.module-icon svg { width: 20px; height: 20px; stroke: var(--text2); fill: none; stroke-width: 1.5; }
+.module-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); margin-bottom: 8px; font-style: italic; }
+.module-desc { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+.module-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.module-tag { padding: 3px 8px; border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text2); text-transform: uppercase; }
+
+/* ============ DASHBOARD - FIXED FOR MOBILE ============ */
+.dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+
+.panel { border: 1px solid var(--border); background: var(--panel-bg); margin-bottom: 12px; }
+.panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.panel-header .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.3em; }
+.panel-body { padding: 16px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+}
+
+.token-select-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 14px 16px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; cursor: pointer;
+}
+
+input[type="text"], input[type="number"], textarea, select {
+  width: 100%; padding: 14px 16px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  outline: none; -webkit-appearance: none; border-radius: 0;
+}
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25); }
+
+.alloc-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.alloc-mode {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 8px; border: 1px solid var(--border);
+  background: var(--bg2); cursor: pointer;
+}
+.alloc-mode.active { border-color: var(--green); background: rgba(163,230,53,0.08); }
+.alloc-mode svg { width: 20px; height: 20px; stroke: var(--text2); fill: none; stroke-width: 1.5; }
+.alloc-mode.active svg { stroke: var(--green); }
+.alloc-mode span { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text2); text-transform: uppercase; }
+.alloc-mode.active span { color: var(--green); }
+
+.tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 12px 20px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em;
+  cursor: pointer; border-bottom: 2px solid transparent;
+}
+.tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* Recipients */
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+.summary-cell { padding: 12px; background: var(--bg2); border: 1px solid var(--border); }
+.summary-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; color: var(--text); }
+.summary-value.green { color: var(--green); }
+.summary-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text2); text-transform: uppercase; margin-top: 4px; }
+
+.recipient-list { max-height: 350px; overflow-y: auto; }
+.recipient-item {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 12px;
+}
+.recipient-wallet { flex: 1; color: rgba(255,255,255,0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recipient-amount { color: var(--text); font-size: 11px; }
+.recipient-status { color: var(--text2); }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+/* Progress */
+.progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 12px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.3s ease; }
+
+/* Terminal */
+.terminal { background: var(--bg2); border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.terminal-header { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.dot { width: 10px; height: 10px; border-radius: 50%; opacity: 0.6; }
+.dot.red { background: var(--red); } .dot.yellow { background: #eab308; } .dot.green { background: var(--green); }
+.terminal-title { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; }
+.terminal-body { padding: 16px; max-height: 400px; overflow-y: auto; }
+.log-line { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; }
+.log-icon { flex-shrink: 0; margin-top: 1px; font-size: 13px; }
+.log-text { font-size: 12px; }
+.log-text.ok { color: var(--green); }
+.log-text.info { color: var(--cyan); }
+.log-text.warn { color: #eab308; }
+
+/* Footer */
+.marquee { overflow: hidden; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 0; background: rgba(255,255,255,0.01); }
+.marquee-track { display: flex; animation: marquee 30s linear infinite; white-space: nowrap; }
+.marquee-item { display: flex; align-items: center; gap: 8px; margin-right: 32px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.15em; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+.footer { padding: 48px 16px 32px; max-width: 1200px; margin: 0 auto; }
+.footer-grid { display: grid; grid-template-columns: 1fr; gap: 32px; margin-bottom: 32px; }
+@media (min-width: 768px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr; } }
+.footer-brand .name { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; letter-spacing: 0.1em; color: var(--text); margin-bottom: 4px; }
+.footer-brand .tag { font-family: 'DM Serif Display', serif; font-size: 14px; color: var(--text2); font-style: italic; margin-bottom: 8px; }
+.footer-brand .desc { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); line-height: 1.6; max-width: 300px; }
+.footer-col h4 { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 12px; }
+.footer-col a { display: block; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); text-decoration: none; padding: 3px 0; }
+.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+.footer-bottom span { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.25); text-transform: uppercase; }
+
+/* BG canvas */
+#bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+/* Mobile nav */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .wallet-btn span { display: none; }
+  .token-selector { padding: 6px 8px; }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<canvas id="bgCanvas"></canvas>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="nav-logo">
+    <svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="4" fill="url(#lg)"/><text x="16" y="21" text-anchor="middle" fill="#050507" font-family="monospace" font-size="14" font-weight="700">SB</text><defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#a3e635"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs></svg>
+    <div><div class="brand">SpecimenB</div><div class="tagline">distribution made easy</div></div>
+  </div>
+  <div class="nav-links"><a href="#dashboard">Dashboard</a><a href="#modules">Modules</a><a href="#logs">Logs</a></div>
+  <div class="nav-wallet">
+    <div class="token-dropdown" style="position:relative;">
+      <button class="token-selector" onclick="document.getElementById('tm').classList.toggle('active')">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,rgba(34,211,238,0.3),rgba(139,92,246,0.3));display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--cyan);font-weight:700;">SP</span>
+          <span>SPEC</span>
+        </span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4L5 7L8 4"/></svg>
+      </button>
+      <div class="token-menu" id="tm">
+        <div class="token-item" onclick="document.getElementById('tm').classList.remove('active')"><div class="token-icon">SP</div><div style="flex:1"><div class="token-symbol">SPEC</div><div class="token-name">Specimen Token</div></div><div><div class="token-balance">1,000,000</div></div></div>
+        <div class="token-item" onclick="document.getElementById('tm').classList.remove('active')"><div class="token-icon">SO</div><div style="flex:1"><div class="token-symbol">SOL</div><div class="token-name">Wrapped SOL</div></div><div><div class="token-balance">145.82</div></div></div>
+        <div class="token-item" onclick="document.getElementById('tm').classList.remove('active')"><div class="token-icon">US</div><div style="flex:1"><div class="token-symbol">USDC</div><div class="token-name">USD Coin</div></div><div><div class="token-balance">50,000</div></div></div>
+        <div class="token-item" onclick="document.getElementById('tm').classList.remove('active')"><div class="token-icon">BO</div><div style="flex:1"><div class="token-symbol">BONK</div><div class="token-name">Bonk</div></div><div><div class="token-balance">2.45B</div></div></div>
+      </div>
+    </div>
+    <div class="status-badge"><span class="pulse-dot"></span><span>Live</span></div>
+    <button class="wallet-btn" onclick="toggleWallet(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 010-4h12v4"/><path d="M4 6v12a2 2 0 002 2h14v-4"/><path d="M18 12a2 2 0 010 4h-2"/></svg><span id="wl">Connect</span></button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" style="position:relative;z-index:1;">
+  <div class="hero-content">
+    <div class="hero-status">
+      <div class="status-pill green"><span class="pulse-dot"></span><span>Mainnet</span></div>
+      <div class="status-pill cyan"><span style="color:var(--cyan);"></span><span>Simulated</span></div>
+    </div>
+    <h1 id="ht">SPECIMENB</h1>
+    <p style="font-family:'DM Serif Display',serif;font-style:italic;font-size:clamp(16px,4vw,24px);color:var(--text2);margin-bottom:16px;">distribution made easy</p>
+    <p class="hero-desc">Deploy massive token distributions with automated precision. Built for Solana Mainnet scale.</p>
+    <p class="hero-cmd">> specimenb distribute --token=SPEC --network=mainnet</p>
+    <div class="hero-buttons">
+      <a href="#dashboard" class="btn-primary" style="text-decoration:none;"> Initialize Distribution</a>
+      <a href="#dashboard" class="btn-secondary" style="text-decoration:none;"> Dashboard</a>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div><span class="stat-value">2.4M</span><span class="stat-unit">SOL</span></div><div class="stat-label">Distributed</div></div>
+      <div class="stat-card"><div><span class="stat-value">48K</span><span class="stat-unit">wallets</span></div><div class="stat-label">Recipients</div></div>
+      <div class="stat-card"><div><span class="stat-value">99.7</span><span class="stat-unit">%</span></div><div class="stat-label">Success</div></div>
+      <div class="stat-card"><div><span class="stat-value">50+</span><span class="stat-unit">SPL</span></div><div class="stat-label">Tokens</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section class="section" id="dashboard" style="position:relative;z-index:1;">
+  <div class="section-label">// Distribution Dashboard</div>
+  <h2>Create Airdrop</h2>
+  <p class="section-desc">Connect wallet, choose token, add recipients, execute.</p>
+
+  <!-- Token Config -->
+  <div class="panel">
+    <div class="panel-header"><div class="label">Token Configuration</div></div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label>Select Token</label>
+        <button class="token-select-btn" onclick="document.getElementById('tm').classList.toggle('active')">
+          <span style="display:flex;align-items:center;gap:10px;">
+            <span style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,rgba(34,211,238,0.3),rgba(139,92,246,0.3));display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cyan);font-weight:700;">SP</span>
+            <span><span style="color:var(--text);">SPEC</span> <span style="color:var(--text2);font-size:11px;">Specimen Token</span></span>
+          </span>
+          <span style="color:var(--green);font-size:11px;">1,000,000 ▼</span>
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Total Amount (SPEC)</label>
+        <input type="text" id="tAmt" value="10000" onchange="updateStats()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Allocation -->
+  <div class="panel">
+    <div class="panel-header"><div class="label">Allocation Mode</div></div>
+    <div class="panel-body">
+      <div class="alloc-modes">
+        <div class="alloc-mode active" onclick="setMode(this,'fixed')"><span style="font-size:20px;"></span><span>Fixed</span></div>
+        <div class="alloc-mode" onclick="setMode(this,'pct')"><span style="font-size:20px;"></span><span>Percent</span></div>
+        <div class="alloc-mode" onclick="setMode(this,'prop')"><span style="font-size:20px;"></span><span>Proportional</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="panel">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('manual',this)"> Manual</div>
+      <div class="tab" onclick="showTab('csv',this)"> CSV</div>
+    </div>
+    <div class="panel-body" id="tab-manual">
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:12px;">
+        <input type="text" id="wIn" placeholder="Wallet address...">
+        <input type="text" id="aIn" placeholder="Amount" style="width:100px;" onkeypress="if(event.key==='Enter')addRec()">
+      </div>
+      <button class="btn-secondary" style="padding:10px 16px;font-size:11px;" onclick="addRec()">+ Add Recipient</button>
+    </div>
+    <div class="panel-body" id="tab-csv" style="display:none;">
+      <textarea id="csvIn" placeholder="wallet,amount&#10;7xKX...,1000&#10;3nR7...,500" rows="5"></textarea>
+      <button class="btn-secondary" style="padding:10px 16px;font-size:11px;margin-top:10px;" onclick="parseCSV()"> Parse CSV</button>
+    </div>
+  </div>
+
+  <!-- Recipients List -->
+  <div class="panel">
+    <div class="panel-header"><div class="label">Recipients (<span id="rCount">0</span>)</div></div>
+    <div class="panel-body">
+      <div class="summary-grid">
+        <div class="summary-cell"><div class="summary-value" id="sTotal">0</div><div class="summary-label">Total Amount</div></div>
+        <div class="summary-cell"><div class="summary-value green" id="sCount">0</div><div class="summary-label">Recipients</div></div>
+      </div>
+      <div class="recipient-list" id="rList"></div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px;">
+    <button class="btn-primary" onclick="simulate()"> Simulate</button>
+    <button class="btn-primary" style="background:var(--cyan);color:var(--bg);" onclick="distribute()"> Execute</button>
+    <button class="btn-secondary" onclick="exportCSV()"> Export CSV</button>
+  </div>
+
+  <!-- Terminal Log -->
+  <div class="section-label">// Transaction Log</div>
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+      <span class="terminal-title">specimenb-cli v3.0</span>
+    </div>
+    <div class="terminal-body" id="tBody"></div>
+  </div>
+</section>
+
+<!-- Modules -->
+<section class="section" id="modules" style="position:relative;z-index:1;">
+  <div class="section-label">// System Modules</div>
+  <h2>Core Architecture</h2>
+  <div class="modules-grid">
+    <div class="module-card"><div class="module-label">SNAPSHOT ENGINE</div><div class="module-title"> Token Snapshots</div><div class="module-desc">Capture holder states, filter by balance, blacklist addresses.</div><div class="module-tags"><span class="module-tag">Filter</span><span class="module-tag">Rank</span><span class="module-tag">Export</span></div></div>
+    <div class="module-card"><div class="module-label">ALLOCATION</div><div class="module-title"> Smart Distribution</div><div class="module-desc">Fixed, percentage, or proportional allocation models.</div><div class="module-tags"><span class="module-tag">Fixed</span><span class="module-tag">Percent</span><span class="module-tag">Proportional</span></div></div>
+    <div class="module-card"><div class="module-label">FEE OPTIMIZER</div><div class="module-title"> Lowest Fees</div><div class="module-desc">Dynamic priority fee at 20th percentile. Compute budget optimization.</div><div class="module-tags"><span class="module-tag">Dynamic</span><span class="module-tag">Anti-Bot</span><span class="module-tag">Simulate</span></div></div>
+    <div class="module-card"><div class="module-label">MERKLE CLAIMS</div><div class="module-title"> Gas-Optimized</div><div class="module-desc">Merkle tree claims for massively scalable airdrops.</div><div class="module-tags"><span class="module-tag">Merkle</span><span class="module-tag">Claims</span><span class="module-tag">Gas Efficient</span></div></div>
+    <div class="module-card"><div class="module-label">BATCH SEND</div><div class="module-title"> Parallel TX</div><div class="module-desc">Queue-based batch processing with parallel sending and retry.</div><div class="module-tags"><span class="module-tag">Parallel</span><span class="module-tag">Retry</span><span class="module-tag">Queue</span></div></div>
+    <div class="module-card"><div class="module-label">CSV IMPORT</div><div class="module-title"> Bulk Upload</div><div class="module-desc">Upload CSV with wallets and amounts. Auto-validate and dedup.</div><div class="module-tags"><span class="module-tag">CSV</span><span class="module-tag">Validate</span><span class="module-tag">Dedup</span></div></div>
+    <div class="module-card"><div class="module-label">VESTING</div><div class="module-title"> Linear & Cliff</div><div class="module-desc">Custom vesting schedules with linear or cliff unlock patterns.</div><div class="module-tags"><span class="module-tag">Linear</span><span class="module-tag">Cliff</span><span class="module-tag">Time-Locked</span></div></div>
+    <div class="module-card"><div class="module-label">ANALYTICS</div><div class="module-title"> Live Tracking</div><div class="module-desc">Real-time transaction monitoring and distribution progress.</div><div class="module-tags"><span class="module-tag">Live</span><span class="module-tag">Progress</span><span class="module-tag">Rank</span></div></div>
+  </div>
+</section>
+
+<!-- Footer -->
+<div class="marquee"><div class="marquee-track">
+  <span class="marquee-item">● DISTRIBUTION MADE EASY</span>
+  <span class="marquee-item">● SPECIMENB LIVE</span>
+  <span class="marquee-item">● 4,521 RECIPIENTS</span>
+  <span class="marquee-item">● GAS OPTIMIZED</span>
+  <span class="marquee-item">● 99.7% SUCCESS</span>
+  <span class="marquee-item">● MAINNET ACTIVE</span>
+  <span class="marquee-item">● DISTRIBUTION MADE EASY</span>
+  <span class="marquee-item">● SPECIMENB LIVE</span>
+</div></div>
+
+<footer class="footer" style="position:relative;z-index:1;">
+  <div style="text-align:center;padding-bottom:32px;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--text);letter-spacing:0.1em;">SpecimenB</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text2);font-style:italic;margin-bottom:8px;">distribution made easy</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.2);">© 2026 SpecimenB. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+// Canvas BG
+const c=document.getElementById('bgCanvas'),x=c.getContext('2d');
+let W,H;function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}addEventListener('resize',resize);resize();
+function draw(){
+  const t=Date.now()*0.0003;
+  for(let y=0;y<H;y+=4)for(let x2=0;x2<W;x2+=4){
+    const v=Math.sin(x2*0.008+t)*Math.cos(y*0.008+t)*0.5+0.5;
+    const r=5+v*10,g=5+v*20,b=7+v*15;
+    x.fillStyle=`rgb(${r|0},${g|0},${b|0})`;x.fillRect(x2,y,4,4);
+  }requestAnimationFrame(draw);
+}draw();
+
+// Wallet
+let wConnected=false;
+function toggleWallet(b){wConnected=!wConnected;document.getElementById('wl').textContent=wConnected?'7xKX...AsU':'Connect';log(wConnected?'ok':'info',wConnected?'[OK] Wallet: 7xKXtg2...osgAsU':'Wallet disconnected');}
+
+// Recipients
+let recs=[];
+function addRec(){
+  const w=document.getElementById('wIn').value,a=parseFloat(document.getElementById('aIn').value);
+  if(!w||!a)return;recs.push({w,a});render();document.getElementById('wIn').value='';document.getElementById('aIn').value='';log('ok','[OK] Added: '+w.slice(0,8)+'... ('+a+')');
+}
+function parseCSV(){
+  const lines=document.getElementById('csvIn').value.trim().split('\n');let c=0;
+  for(const l of lines){const p=l.split(',');if(p.length>=2){recs.push({w:p[0].trim(),a:parseFloat(p[1])});c++;}}
+  render();log('ok','[OK] Parsed '+c+' from CSV');
+}
+function render(){
+  const t=recs.reduce((s,r)=>s+r.a,0);
+  document.getElementById('rCount').textContent=recs.length;
+  document.getElementById('sTotal').textContent=t.toLocaleString();
+  document.getElementById('sCount').textContent=recs.length;
+  document.getElementById('rList').innerHTML=recs.map((r,i)=>'<div class="recipient-item"><span style="color:var(--text2);width:20px;">'+(i+1)+'</span><span class="recipient-wallet">'+r.w.slice(0,14)+'...</span><span class="recipient-amount">'+r.a+' SPEC</span><span style="color:var(--text2);"></span></div>').join('');
+}
+function updateStats(){}
+
+function showTab(tab,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('tab-manual').style.display=tab==='manual'?'block':'none';document.getElementById('tab-csv').style.display=tab==='csv'?'block':'none';}
+function setMode(el,m){document.querySelectorAll('.alloc-mode').forEach(a=>a.classList.remove('active'));el.classList.add('active');log('info','> Mode: '+m);}
+
+function simulate(){log('info','> SIMULATION START');log('info','> Token: SPEC | Recipients: '+recs.length);if(!recs.length){log('warn','[!] No recipients!');return;}let i=0;const iv=setInterval(()=>{if(i>=recs.length){clearInterval(iv);log('ok','[OK] Sim: '+recs.length+'/'+recs.length+' OK');log('info','> Est fee: '+(recs.length*0.000005).toFixed(6)+' SOL');return;}log(Math.random()>0.02?'ok':'warn',(Math.random()>0.02?'[OK] ':'[!] ')+'Tx '+(i+1)+': '+recs[i].w.slice(0,8)+'... -> '+recs[i].a);i++;},80);}
+
+function distribute(){if(!recs.length){log('warn','[!] Add recipients first');return;}log('info','> DISTRIBUTE START');let p=0;document.getElementById('prog')||(document.body.insertAdjacentHTML('beforeend','<div id="prog" style="position:fixed;bottom:0;left:0;right:0;height:4px;background:rgba(255,255,255,0.05);z-index:9999;"><div id="progF" style="height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));width:0%;transition:width 0.3s;"></div></div>'));const iv=setInterval(()=>{p+=3;document.getElementById('progF').style.width=p+'%';if(p>=100){clearInterval(iv);log('ok','[OK] DISTRIBUTION COMPLETE!');log('ok','[OK] Total: '+recs.reduce((s,r)=>s+r.a,0)+' SPEC');}},100);}
+
+function exportCSV(){if(!recs.length)return;const csv='wallet,amount\n'+recs.map(r=>r.w+','+r.a).join('\n');const b=new Blob([csv],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='specimenb_distribution.csv';a.click();log('ok','[OK] Exported CSV');}
+
+// Terminal
+function log(type,text){
+  const b=document.getElementById('tBody');
+  const d=document.createElement('div');d.className='log-line';d.style.animation='none';
+  const colors={ok:'<span style="color:var(--green)">✓</span>',info:'<span style="color:var(--cyan)">›</span>',warn:'<span style="color:#eab308">!</span>'};
+  d.innerHTML='<span class="log-icon">'+(colors[type]||'›')+'</span><span class="log-text '+(type==='ok'?'ok':type==='info'?'info':'warn')+'">'+text+'</span>';
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+
+// Boot logs
+const boot=[{t:'info',m:'> SpecimenB v3.0 initializing...'},{t:'info',m:'> Distribution Made Easy'},{t:'ok',m:'[OK] Solana Mainnet connected'},{t:'ok',m:'[OK] Wallet: 7xKXtg2...osgAsU'},{t:'ok',m:'[OK] 4 tokens found: SOL, USDC, BONK, SPEC'},{t:'info',m:'> Selected: SPEC (1,000,000 balance)'},{t:'info',m:'> Ready for distribution'}];
+let bi=0;function bootLog(){if(bi>=boot.length)return;log(boot[bi].t,boot[bi].m);bi++;setTimeout(bootLog,300+Math.random()*200);}setTimeout(bootLog,400);
+
+// Scramble
+const ht=document.getElementById('ht'),tgt='SPECIMENB',ch='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*';let it=0;
+const si=setInterval(()=>{ht.textContent=tgt.split('').map((c,i)=>i<it?tgt[i]:ch[Math.random()*ch.length|0]).join('');it+=0.3;if(it>=tgt.length){ht.textContent=tgt;clearInterval(si);}},40);
+
+document.addEventListener('click',e=>{if(!e.target.closest('.token-dropdown'))document.getElementById('tm').classList.remove('active');});
+</script>
+</body>
+</html>
