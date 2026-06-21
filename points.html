@@ -6,104 +6,25 @@
 <title>Quests & Points | SpecimenB</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #0a0a0f;
-    color: #e0e0e0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    min-height: 100vh;
-  }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
   .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
   .header { text-align: center; margin-bottom: 50px; }
   .header h1 { font-size: 28px; font-weight: 600; color: #fff; letter-spacing: 0.5px; }
   .header p { color: #888; margin-top: 8px; font-size: 14px; }
-  
-  .points-card {
-    background: #111118;
-    border: 1px solid #1a1a2e;
-    border-radius: 16px;
-    padding: 32px;
-    text-align: center;
-    margin-bottom: 40px;
-    position: relative;
-    overflow: hidden;
-  }
-  .points-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #4ade80, transparent);
-    animation: pulse 3s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 1; }
-  }
-  .live-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #0f291e;
-    color: #4ade80;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .live-dot {
-    width: 6px; height: 6px;
-    background: #4ade80;
-    border-radius: 50%;
-    animation: blink 1.5s infinite;
-  }
+  .points-card { background: #111118; border: 1px solid #1a1a2e; border-radius: 16px; padding: 32px; text-align: center; margin-bottom: 40px; position: relative; overflow: hidden; }
+  .points-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #4ade80, transparent); animation: pulse 3s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+  .live-badge { display: inline-flex; align-items: center; gap: 6px; background: #0f291e; color: #4ade80; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+  .live-dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: blink 1.5s infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  .points-value {
-    font-size: 56px;
-    font-weight: 700;
-    color: #fff;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -1px;
-  }
+  .points-value { font-size: 56px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
   .points-label { color: #666; font-size: 13px; margin-top: 4px; }
-  
-  .section-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-bottom: 20px;
-  }
-  .milestones {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-  .milestone {
-    background: #111118;
-    border: 1px solid #1a1a2e;
-    border-radius: 12px;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    transition: all 0.3s ease;
-  }
+  .section-title { font-size: 14px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
+  .milestones { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+  .milestone { background: #111118; border: 1px solid #1a1a2e; border-radius: 12px; padding: 20px 24px; display: flex; align-items: center; gap: 16px; transition: all 0.3s ease; }
   .milestone.unlocked { border-color: #1e3a2f; background: #0f1f17; }
   .milestone.current { border-color: #4ade80; }
-  .milestone-icon {
-    width: 44px; height: 44px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
+  .milestone-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
   .milestone.unlocked .milestone-icon { background: #1e3a2f; color: #4ade80; }
   .milestone.current .milestone-icon { background: #4ade80; color: #0a0a0f; }
   .milestone.locked .milestone-icon { background: #1a1a2e; color: #555; }
@@ -114,171 +35,44 @@
   .milestone.unlocked .milestone-points { color: #4ade80; }
   .milestone.current .milestone-points { color: #4ade80; }
   .checkmark { color: #4ade80; font-size: 18px; }
-  
-  .progress-bar {
-    width: 100%;
-    height: 4px;
-    background: #1a1a2e;
-    border-radius: 2px;
-    margin-top: 12px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4ade80, #22c55e);
-    border-radius: 2px;
-    transition: width 1s ease;
-  }
-  
-  .referral-card {
-    background: #111118;
-    border: 1px solid #1a1a2e;
-    border-radius: 16px;
-    padding: 28px;
-    margin-bottom: 40px;
-  }
-  .referral-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .stat-box {
-    text-align: center;
-    padding: 16px;
-    background: #0a0a0f;
-    border-radius: 10px;
-    border: 1px solid #1a1a2e;
-  }
-  .stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
-    font-variant-numeric: tabular-nums;
-  }
+  .progress-bar { width: 100%; height: 4px; background: #1a1a2e; border-radius: 2px; margin-top: 12px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22c55e); border-radius: 2px; transition: width 1s ease; }
+  .referral-card { background: #111118; border: 1px solid #1a1a2e; border-radius: 16px; padding: 28px; margin-bottom: 40px; }
+  .referral-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-box { text-align: center; padding: 16px; background: #0a0a0f; border-radius: 10px; border: 1px solid #1a1a2e; }
+  .stat-value { font-size: 24px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
   .stat-label { font-size: 11px; color: #666; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .referral-link-box {
-    background: #0a0a0f;
-    border: 1px solid #1a1a2e;
-    border-radius: 10px;
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .referral-link-text {
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    color: #aaa;
-    word-break: break-all;
-  }
-  .copy-btn {
-    background: #1a1a2e;
-    color: #ccc;
-    border: 1px solid #2a2a3e;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
+  .referral-link-box { background: #0a0a0f; border: 1px solid #1a1a2e; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .referral-link-text { font-family: 'Courier New', monospace; font-size: 13px; color: #aaa; word-break: break-all; }
+  .copy-btn { background: #1a1a2e; color: #ccc; border: 1px solid #2a2a3e; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .copy-btn:hover { background: #2a2a3e; color: #fff; }
   .copy-btn.copied { background: #1e3a2f; color: #4ade80; border-color: #4ade80; }
-  
   .quests-list { display: flex; flex-direction: column; gap: 10px; }
-  .quest {
-    background: #111118;
-    border: 1px solid #1a1a2e;
-    border-radius: 12px;
-    padding: 18px 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    transition: all 0.2s;
-  }
+  .quest { background: #111118; border: 1px solid #1a1a2e; border-radius: 12px; padding: 18px 24px; display: flex; align-items: center; gap: 16px; transition: all 0.2s; }
   .quest:hover { border-color: #2a2a3e; }
   .quest.completed { opacity: 0.6; }
-  .quest-icon {
-    width: 40px; height: 40px;
-    background: #1a1a2e;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
+  .quest-icon { width: 40px; height: 40px; background: #1a1a2e; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
   .quest.completed .quest-icon { background: #1e3a2f; color: #4ade80; }
   .quest-info { flex: 1; }
   .quest-name { font-size: 14px; font-weight: 600; color: #fff; }
   .quest-desc { font-size: 12px; color: #666; margin-top: 2px; }
-  .quest-reward {
-    font-size: 13px;
-    font-weight: 600;
-    color: #4ade80;
-    white-space: nowrap;
-  }
+  .quest-reward { font-size: 13px; font-weight: 600; color: #4ade80; white-space: nowrap; }
   .quest.completed .quest-reward { color: #4ade80; }
-  .quest-status {
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
+  .quest-status { font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
   .quest-status.done { background: #1e3a2f; color: #4ade80; }
   .quest-status.pending { background: #1a1a2e; color: #888; }
-  
-  .activity-feed {
-    background: #111118;
-    border: 1px solid #1a1a2e;
-    border-radius: 16px;
-    padding: 24px;
-  }
-  .activity-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #1a1a2e;
-  }
+  .activity-feed { background: #111118; border: 1px solid #1a1a2e; border-radius: 16px; padding: 24px; }
+  .activity-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #1a1a2e; }
   .activity-item:last-child { border-bottom: none; }
-  .activity-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #4ade80;
-    flex-shrink: 0;
-  }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
   .activity-text { font-size: 13px; color: #aaa; flex: 1; }
   .activity-time { font-size: 11px; color: #555; }
   .activity-points { font-size: 12px; font-weight: 600; color: #4ade80; }
-  
-  .nav {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 32px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #1a1a2e;
-  }
-  .nav a {
-    color: #888;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 16px;
-    border-radius: 8px;
-    transition: all 0.2s;
-  }
+  .nav { display: flex; gap: 8px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #1a1a2e; }
+  .nav a { color: #888; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: all 0.2s; }
   .nav a:hover, .nav a.active { color: #fff; background: #1a1a2e; }
-  
-  @media (max-width: 600px) {
-    .referral-stats { grid-template-columns: 1fr; }
-    .points-value { font-size: 40px; }
-    .milestone { flex-wrap: wrap; }
-  }
+  .loading { color: #666; font-size: 12px; text-align: center; padding: 20px; }
+  @media (max-width: 600px) { .referral-stats { grid-template-columns: 1fr; } .points-value { font-size: 40px; } .milestone { flex-wrap: wrap; } }
 </style>
 </head>
 <body>
@@ -288,186 +82,147 @@
     <a href="/points" class="active">Points</a>
     <a href="/quests">Quests</a>
   </div>
-  
   <div class="header">
     <h1>Quests & Points</h1>
     <p>Complete quests, earn points, unlock milestones</p>
   </div>
-  
   <div class="points-card">
     <div class="live-badge"><span class="live-dot"></span> Live</div>
-    <div class="points-value" id="livePoints">0</div>
+    <div class="points-value" id="livePoints">--</div>
     <div class="points-label">Total Points Earned</div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
     <div style="margin-top:8px; font-size:12px; color:#666;">
-      <span id="nextMilestone">Next: Explorer</span> 
-      <span style="color:#444">|</span> 
-      <span id="pointsToNext">2,000 pts to go</span>
+      <span id="nextMilestone">Loading...</span> <span style="color:#444">|</span> <span id="pointsToNext">--</span>
     </div>
   </div>
-  
   <div class="section-title">Milestones</div>
-  <div class="milestones" id="milestones"></div>
-  
+  <div class="milestones" id="milestones"><div class="loading">Loading...</div></div>
   <div class="section-title">Referrals</div>
   <div class="referral-card">
     <div class="referral-stats">
-      <div class="stat-box">
-        <div class="stat-value" id="refInvited">0</div>
-        <div class="stat-label">Invited</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="refJoined">0</div>
-        <div class="stat-label">Joined</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="refEarned">0</div>
-        <div class="stat-label">Points Earned</div>
-      </div>
+      <div class="stat-box"><div class="stat-value" id="refInvited">--</div><div class="stat-label">Invited</div></div>
+      <div class="stat-box"><div class="stat-value" id="refJoined">--</div><div class="stat-label">Joined</div></div>
+      <div class="stat-box"><div class="stat-value" id="refEarned">--</div><div class="stat-label">Points Earned</div></div>
     </div>
     <div class="referral-link-box">
-      <span class="referral-link-text" id="refLink">https://specimen-b.vercel.app/?ref=USER6E1SE7</span>
+      <span class="referral-link-text" id="refLink">Loading...</span>
       <button class="copy-btn" onclick="copyRef()" id="copyBtn">Copy</button>
     </div>
     <div style="margin-top:12px; font-size:12px; color:#666;">
       Earn <span style="color:#4ade80; font-weight:600;">100 points</span> for every friend who joins and completes their first quest.
     </div>
   </div>
-  
   <div class="section-title">Active Quests</div>
-  <div class="quests-list" id="questsList"></div>
-  
+  <div class="quests-list" id="questsList"><div class="loading">Loading...</div></div>
   <div style="margin-top: 40px;">
     <div class="section-title">Recent Activity</div>
-    <div class="activity-feed" id="activityFeed"></div>
+    <div class="activity-feed" id="activityFeed"><div class="loading">Loading...</div></div>
   </div>
 </div>
-
 <script>
-const userData = {
-  points: 3000,
-  referralCode: 'USER6E1SE7',
-  invited: 0,
-  joined: 0,
-  earnedFromRef: 0,
-  milestones: [
-    { name: 'Starter', points: 1500, desc: 'Beginner badge unlocked', unlocked: true },
-    { name: 'Explorer', points: 5000, desc: 'Early access badge', unlocked: false },
-    { name: 'Champion', points: 10000, desc: 'Priority support', unlocked: false },
-    { name: 'Elite', points: 50000, desc: 'Exclusive rewards', unlocked: false },
-    { name: 'Legend', points: 500000, desc: 'VIP status', unlocked: false }
-  ],
-  quests: [
-    { name: 'Follow X Account', desc: 'Follow official X account', reward: 1500, completed: true, icon: 'X' },
-    { name: 'Join Discord', desc: 'Join the community Discord server', reward: 500, completed: false, icon: 'D' },
-    { name: 'Share on X', desc: 'Tweet about SpecimenB with hashtag', reward: 1000, completed: false, icon: 'S' },
-    { name: 'Connect Wallet', desc: 'Link your Solana wallet', reward: 800, completed: false, icon: 'W' },
-    { name: 'First Distribution', desc: 'Complete your first token distribution', reward: 2000, completed: false, icon: 'T' }
-  ],
-  activities: [
-    { text: 'Completed quest: Follow X Account', time: '2h ago', points: '+1500' },
-    { text: 'Milestone unlocked: Starter', time: '2h ago', points: '' },
-    { text: 'Account created', time: '1d ago', points: '+100' }
-  ]
-};
+const API_BASE = window.location.origin;
+let currentPoints = 0;
+let targetPoints = 0;
 
-let currentDisplay = 0;
-const targetPoints = userData.points;
+async function fetchData() {
+  try {
+    const res = await fetch(API_BASE + '/api/points');
+    if (!res.ok) throw new Error('Failed');
+    const data = await res.json();
+    renderAll(data);
+  } catch (e) {
+    console.error('Fetch error:', e);
+    document.getElementById('livePoints').textContent = 'Offline';
+  }
+}
 
-function animateCounter() {
-  const diff = targetPoints - currentDisplay;
-  if (diff <= 0) {
-    currentDisplay = targetPoints;
-    document.getElementById('livePoints').textContent = currentDisplay.toLocaleString();
+function renderAll(data) {
+  const user = data.user;
+  targetPoints = user.points;
+  animatePoints();
+  updateProgress(user.points, data.milestones);
+  document.getElementById('refInvited').textContent = user.invited;
+  document.getElementById('refJoined').textContent = user.joined;
+  document.getElementById('refEarned').textContent = user.earned_from_ref;
+  document.getElementById('refLink').textContent = window.location.origin + '/?ref=' + user.referral_code;
+  renderMilestones(data.milestones, user.points);
+  renderQuests(data.quests);
+  renderActivity(data.activities);
+}
+
+function animatePoints() {
+  const diff = targetPoints - currentPoints;
+  if (Math.abs(diff) < 1) {
+    currentPoints = targetPoints;
+    document.getElementById('livePoints').textContent = Math.floor(currentPoints).toLocaleString();
     return;
   }
-  const step = Math.max(1, Math.floor(diff / 20));
-  currentDisplay += step;
-  document.getElementById('livePoints').textContent = currentDisplay.toLocaleString();
-  requestAnimationFrame(animateCounter);
+  currentPoints += diff * 0.1;
+  document.getElementById('livePoints').textContent = Math.floor(currentPoints).toLocaleString();
+  requestAnimationFrame(animatePoints);
 }
 
-function updateProgress() {
-  const current = userData.points;
-  const nextMilestone = userData.milestones.find(m => !m.unlocked);
-  const prevMilestone = userData.milestones.slice().reverse().find(m => m.unlocked);
-  const prevPoints = prevMilestone ? prevMilestone.points : 0;
-  const nextPoints = nextMilestone ? nextMilestone.points : current;
-  const progress = ((current - prevPoints) / (nextPoints - prevPoints)) * 100;
-  
+function updateProgress(points, milestones) {
+  const unlocked = milestones.filter(m => m.unlocked);
+  const next = milestones.find(m => !m.unlocked);
+  const prev = unlocked.length > 0 ? unlocked[unlocked.length - 1] : { points: 0 };
+  if (!next) {
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('nextMilestone').textContent = 'Max Level';
+    document.getElementById('pointsToNext').textContent = 'All milestones unlocked';
+    return;
+  }
+  const progress = ((points - prev.points) / (next.points - prev.points)) * 100;
   document.getElementById('progressFill').style.width = Math.min(progress, 100) + '%';
-  document.getElementById('nextMilestone').textContent = nextMilestone ? 'Next: ' + nextMilestone.name : 'Max Level';
-  document.getElementById('pointsToNext').textContent = nextMilestone 
-    ? (nextPoints - current).toLocaleString() + ' pts to go' 
-    : 'All milestones unlocked';
+  document.getElementById('nextMilestone').textContent = 'Next: ' + next.name;
+  document.getElementById('pointsToNext').textContent = (next.points - points).toLocaleString() + ' pts to go';
 }
 
-function renderMilestones() {
+function renderMilestones(milestones, points) {
   const container = document.getElementById('milestones');
+  container.innerHTML = '';
   let foundCurrent = false;
-  
-  userData.milestones.forEach((m, i) => {
+  milestones.forEach(m => {
     const isCurrent = !m.unlocked && !foundCurrent;
     if (isCurrent) foundCurrent = true;
-    
     const div = document.createElement('div');
     div.className = 'milestone ' + (m.unlocked ? 'unlocked' : isCurrent ? 'current' : 'locked');
-    div.innerHTML = `
-      <div class="milestone-icon">${m.unlocked ? '&#10003;' : isCurrent ? '&#9654;' : '&#9679;'}</div>
-      <div class="milestone-info">
-        <div class="milestone-name">${m.name}</div>
-        <div class="milestone-desc">${m.desc}</div>
-      </div>
-      <div class="milestone-points">${m.points.toLocaleString()} PTS</div>
-      ${m.unlocked ? '<div class="checkmark">&#10003;</div>' : ''}
-    `;
+    div.innerHTML = '<div class="milestone-icon">' + (m.unlocked ? '&#10003;' : isCurrent ? '&#9654;' : '&#9679;') + '</div><div class="milestone-info"><div class="milestone-name">' + m.name + '</div><div class="milestone-desc">' + m.desc + '</div></div><div class="milestone-points">' + m.points.toLocaleString() + ' PTS</div>' + (m.unlocked ? '<div class="checkmark">&#10003;</div>' : '');
     container.appendChild(div);
   });
 }
 
-function renderQuests() {
+function renderQuests(quests) {
   const container = document.getElementById('questsList');
-  userData.quests.forEach(q => {
+  container.innerHTML = '';
+  quests.forEach(q => {
     const div = document.createElement('div');
     div.className = 'quest ' + (q.completed ? 'completed' : '');
-    div.innerHTML = `
-      <div class="quest-icon">${q.icon}</div>
-      <div class="quest-info">
-        <div class="quest-name">${q.name}</div>
-        <div class="quest-desc">${q.desc}</div>
-      </div>
-      <div class="quest-reward">+${q.reward.toLocaleString()}</div>
-      <div class="quest-status ${q.completed ? 'done' : 'pending'}">${q.completed ? 'Done' : 'Start'}</div>
-    `;
+    div.innerHTML = '<div class="quest-icon">' + q.icon + '</div><div class="quest-info"><div class="quest-name">' + q.name + '</div><div class="quest-desc">' + q.desc + '</div></div><div class="quest-reward">+' + q.reward.toLocaleString() + '</div><div class="quest-status ' + (q.completed ? 'done' : 'pending') + '">' + (q.completed ? 'Done' : 'Start') + '</div>';
     if (!q.completed) {
       div.style.cursor = 'pointer';
-      div.onclick = () => alert('Quest started: ' + q.name);
+      div.onclick = async () => {
+        await fetch(API_BASE + '/api/complete-quest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quest: q.name })
+        });
+        fetchData();
+      };
     }
     container.appendChild(div);
   });
 }
 
-function renderActivity() {
+function renderActivity(activities) {
   const container = document.getElementById('activityFeed');
-  userData.activities.forEach(a => {
+  container.innerHTML = '';
+  activities.forEach(a => {
     const div = document.createElement('div');
     div.className = 'activity-item';
-    div.innerHTML = `
-      <div class="activity-dot"></div>
-      <div class="activity-text">${a.text}</div>
-      <div class="activity-time">${a.time}</div>
-      ${a.points ? '<div class="activity-points">' + a.points + '</div>' : ''}
-    `;
+    div.innerHTML = '<div class="activity-dot"></div><div class="activity-text">' + a.text + '</div><div class="activity-time">' + a.time + '</div>' + (a.points > 0 ? '<div class="activity-points">+' + a.points + '</div>' : '');
     container.appendChild(div);
   });
-}
-
-function updateReferralStats() {
-  document.getElementById('refInvited').textContent = userData.invited;
-  document.getElementById('refJoined').textContent = userData.joined;
-  document.getElementById('refEarned').textContent = userData.earnedFromRef;
 }
 
 function copyRef() {
@@ -480,38 +235,9 @@ function copyRef() {
   });
 }
 
-function simulateLive() {
-  setInterval(() => {
-    if (Math.random() > 0.7) {
-      const add = Math.floor(Math.random() * 50) + 10;
-      userData.points += add;
-      document.getElementById('livePoints').textContent = userData.points.toLocaleString();
-      updateProgress();
-      
-      const feed = document.getElementById('activityFeed');
-      const item = document.createElement('div');
-      item.className = 'activity-item';
-      item.style.animation = 'fadeIn 0.5s ease';
-      item.innerHTML = `
-        <div class="activity-dot" style="background:#4ade80"></div>
-        <div class="activity-text">Points earned from activity</div>
-        <div class="activity-time">Just now</div>
-        <div class="activity-points">+${add}</div>
-      `;
-      feed.insertBefore(item, feed.firstChild);
-      if (feed.children.length > 6) feed.removeChild(feed.lastChild);
-    }
-  }, 5000);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  animateCounter();
-  updateProgress();
-  renderMilestones();
-  renderQuests();
-  renderActivity();
-  updateReferralStats();
-  simulateLive();
+  fetchData();
+  setInterval(fetchData, 2000);
 });
 </script>
 </body>
