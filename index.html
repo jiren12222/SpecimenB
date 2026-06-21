@@ -316,6 +316,44 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  background: rgba(5,5,7,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  color: #666;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.2s;
+}
+
+.bottom-nav a.active {
+  color: #a3e635;
+  background: rgba(163,230,53,0.05);
+}
+
+body {
+  padding-bottom: 60px;
+}
 </style>
 </head>
 <body>
@@ -570,5 +608,12 @@ document.addEventListener('click',e=>{if(!e.target.closest('.token-dropdown'))do
 <script src="snapshot.js"></script>
 <script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
 <script src="enhance.js"></script>
+
+<div class="bottom-nav">
+  <a href="index.html" class="active">Home</a>
+  <a href="tasks.html">Quest</a>
+  <a href="points.html">Points</a>
+</div>
+
 </body>
 </html>
