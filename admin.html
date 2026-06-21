@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecimenB - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1a1a1a;
+            background: #0a0a0a;
+        }
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background: #b8d935;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #0a0a0a;
+        }
+        .top-bar-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar-brand .name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f0f0f0;
+            letter-spacing: 1px;
+        }
+        .top-bar-brand .tag {
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .admin-badge {
+            background: #b8d935;
+            color: #0a0a0a;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #f0f0f0;
+            margin-bottom: 4px;
+        }
+        .header p {
+            font-size: 13px;
+            color: #555;
+        }
+        .card {
+            background: #111;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            margin: 16px 20px;
+            padding: 20px;
+        }
+        .card-label {
+            font-size: 11px;
+            color: #555;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .form-input::placeholder {
+            color: #333;
+        }
+        .form-select {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .form-textarea {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 6px;
+            padding: 12px 14px;
+            color: #ccc;
+            font-size: 14px;
+            min-height: 80px;
+            resize: vertical;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #b8d935;
+            border: none;
+            border-radius: 6px;
+            color: #0a0a0a;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-danger {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: #888;
+            font-size: 14px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .task-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            border-radius: 8px;
+        }
+        .task-info {
+            flex: 1;
+        }
+        .task-info .name {
+            font-size: 14px;
+            color: #bbb;
+            margin-bottom: 4px;
+        }
+        .task-info .meta {
+            font-size: 12px;
+            color: #555;
+        }
+        .task-points {
+            font-size: 14px;
+            color: #b8d935;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+        .task-delete {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #666;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 16px 20px;
+        }
+        .stat-box {
+            background: #111;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ccc;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #555;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid #1a1a1a;
+            margin-top: 20px;
+        }
+        .nav-links a {
+            color: #555;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid #222;
+            border-radius: 4px;
+        }
+        .nav-links a:hover {
+            border-color: #444;
+            color: #aaa;
+        }
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #aaa;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 200;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="logo-box">SB</div>
+            <div class="top-bar-brand">
+                <span class="name">SpecimenB</span>
+                <span class="tag">Distribution Made Easy</span>
+            </div>
+        </div>
+        <div class="admin-badge">ADMIN</div>
+    </div>
+
+    <div class="header">
+        <h1>Task Manager</h1>
+        <p>Create and manage quest tasks. Changes save to localStorage.</p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-value" id="total-tasks">0</div>
+            <div class="stat-label">Total Tasks</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="active-tasks">0</div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" id="total-points">0</div>
+            <div class="stat-label">Points Pool</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Add New Task</div>
+        <div class="form-group">
+            <label class="form-label">Task Name</label>
+            <input class="form-input" id="task-name" placeholder="e.g. Follow on X">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-textarea" id="task-desc" placeholder="What users need to do..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Platform</label>
+            <select class="form-select" id="task-platform">
+                <option value="X (Twitter)">X (Twitter)</option>
+                <option value="Discord">Discord</option>
+                <option value="Telegram">Telegram</option>
+                <option value="Website">Website</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Points Reward</label>
+            <input class="form-input" id="task-points" type="number" placeholder="1500" value="1500">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Task Link (optional)</label>
+            <input class="form-input" id="task-link" placeholder="https://...">
+        </div>
+        <button class="btn-primary" onclick="addTask()">Add Task</button>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Existing Tasks</div>
+        <div class="task-list" id="task-list"></div>
+        <button class="btn-danger" onclick="clearAllTasks()">Clear All Tasks</button>
+    </div>
+
+    <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="quest.html">Quest</a>
+        <a href="points.html">Points</a>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('specimenb_tasks') || '[]');
+        
+        function saveTasks() {
+            localStorage.setItem('specimenb_tasks', JSON.stringify(tasks));
+            renderTasks();
+            updateStats();
+        }
+        
+        function addTask() {
+            const name = document.getElementById('task-name').value.trim();
+            const desc = document.getElementById('task-desc').value.trim();
+            const platform = document.getElementById('task-platform').value;
+            const points = parseInt(document.getElementById('task-points').value) || 0;
+            const link = document.getElementById('task-link').value.trim();
+            
+            if (!name) {
+                showToast('Task name is required');
+                return;
+            }
+            
+            const task = {
+                id: Date.now().toString(),
+                name: name,
+                description: desc,
+                platform: platform,
+                points: points,
+                link: link,
+                created: new Date().toISOString(),
+                active: true
+            };
+            
+            tasks.push(task);
+            saveTasks();
+            
+            document.getElementById('task-name').value = '';
+            document.getElementById('task-desc').value = '';
+            document.getElementById('task-points').value = '1500';
+            document.getElementById('task-link').value = '';
+            
+            showToast('Task added successfully');
+        }
+        
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            saveTasks();
+            showToast('Task deleted');
+        }
+        
+        function clearAllTasks() {
+            if (confirm('Delete all tasks? This cannot be undone.')) {
+                tasks = [];
+                saveTasks();
+                showToast('All tasks cleared');
+            }
+        }
+        
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            if (tasks.length === 0) {
+                list.innerHTML = '<div style="color:#444; text-align:center; padding:20px;">No tasks yet. Add one above.</div>';
+                return;
+            }
+            
+            list.innerHTML = tasks.map(t => `
+                <div class="task-row">
+                    <div class="task-info">
+                        <div class="name">${t.name}</div>
+                        <div class="meta">${t.platform} &bull; ${t.description || 'No description'}</div>
+                    </div>
+                    <div class="task-points">+${t.points}</div>
+                    <button class="task-delete" onclick="deleteTask('${t.id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+        
+        function updateStats() {
+            document.getElementById('total-tasks').textContent = tasks.length;
+            document.getElementById('active-tasks').textContent = tasks.filter(t => t.active).length;
+            document.getElementById('total-points').textContent = tasks.reduce((sum, t) => sum + t.points, 0).toLocaleString();
+        }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+        
+        renderTasks();
+        updateStats();
+    </script>
+</body>
+</html>
