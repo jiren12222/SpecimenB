@@ -63,14 +63,14 @@ sb.innerHTML = `
 <div class="sb-h"><div class="sb-brand"><div class="bx">SB</div><div><div class="nm">SpecimenB</div><div class="tg">distribution made easy</div></div></div></div>
 <div class="sb-nav">
 <div class="sb-sec">Main</div>
-<div class="sb-item on" data-pg="dashboard" onclick="nav('dashboard',this)">&#128202; Dashboard</div>
-<div class="sb-item" data-pg="distribution" onclick="nav('distribution',this)">&#128640; Distribution</div>
-<div class="sb-item" data-pg="snapshot" onclick="nav('snapshot',this)">&#128248; Snapshot</div>
-<div class="sb-item" data-pg="terminal" onclick="nav('terminal',this)">&#128187; Terminal</div>
-<div class="sb-item" data-pg="modules" onclick="nav('modules',this)">&#128302; Modules</div>
+<div class="sb-item on" data-pg="dashboard" onclick="nav('dashboard',this)"> Dashboard</div>
+<div class="sb-item" data-pg="distribution" onclick="nav('distribution',this)"> Distribution</div>
+<div class="sb-item" data-pg="snapshot" onclick="nav('snapshot',this)"> Snapshot</div>
+<div class="sb-item" data-pg="terminal" onclick="nav('terminal',this)"> Terminal</div>
+<div class="sb-item" data-pg="modules" onclick="nav('modules',this)"> Modules</div>
 <div class="sb-sec">System</div>
-<div class="sb-item" data-pg="wallet" onclick="nav('wallet',this)">&#128091; Wallet</div>
-<div class="sb-item" data-pg="settings" onclick="nav('settings',this)">&#9881; Settings</div>
+<div class="sb-item" data-pg="wallet" onclick="nav('wallet',this)"> Wallet</div>
+<div class="sb-item" data-pg="settings" onclick="nav('settings',this)"> Settings</div>
 </div>
 <div class="sb-foot">
 <button class="sb-wb" id="sbConnBtn" onclick="enhanceConnect()">Connect Wallet</button>
@@ -197,9 +197,9 @@ pagesContainer.innerHTML = `
 <div id="wTokensEmpty" style="text-align:center;padding:40px 20px;color:#8888a0;font-size:12px">Connect wallet to view tokens</div>
 </div>
 <div style="border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);padding:16px;font-size:11px;color:#8888a0;line-height:1.8">
-<div style="margin-bottom:10px">&#128274; <strong style="color:#f5f5f5">AES-256 Encrypted</strong> wallet storage</div>
-<div style="margin-bottom:10px">&#128221; <strong style="color:#f5f5f5">BIP39 Seed Phrase</strong> 24-word recovery</div>
-<div>&#9888; <strong style="color:#eab308">Never share</strong> your seed phrase</div>
+<div style="margin-bottom:10px"> <strong style="color:#f5f5f5">AES-256 Encrypted</strong> wallet storage</div>
+<div style="margin-bottom:10px"> <strong style="color:#f5f5f5">BIP39 Seed Phrase</strong> 24-word recovery</div>
+<div> <strong style="color:#eab308">Never share</strong> your seed phrase</div>
 </div>
 </div>
 </div>
@@ -411,7 +411,7 @@ const term = document.getElementById('termBig');
 if(!term) return;
 const d = document.createElement('div');
 d.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:2px 0;font-size:11px';
-const c = {ok:'<span style="color:#a3e635">&#10003;</span>',info:'<span style="color:#22d3ee">&rsaquo;</span>',err:'<span style="color:#ef4444">&#10007;</span>',warn:'<span style="color:#eab308">!</span>'};
+const c = {ok:'<span style="color:#a3e635"></span>',info:'<span style="color:#22d3ee">&rsaquo;</span>',err:'<span style="color:#ef4444"></span>',warn:'<span style="color:#eab308">!</span>'};
 const cl = {ok:'color:#a3e635',info:'color:#22d3ee',err:'color:#ef4444',warn:'color:#eab308'};
 d.innerHTML = (c[type]||'&rsaquo;')+' <span style="'+cl[type]+'">'+text+'</span>';
 term.appendChild(d);
@@ -442,3 +442,21 @@ setTimeout(boot2,400);
 console.log('[SpecimenB] Enhancement loaded - Sidebar, 6 pages, Phantom wallet, Solana RPC');
 })();
 
+
+// ===== NAV FIX: Event delegation =====
+document.getElementById('sidebar').addEventListener('click', function(e) {
+  const item = e.target.closest('.sb-item');
+  if (!item) return;
+  const page = item.getAttribute('data-pg');
+  if (!page) return;
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  if (page !== 'dashboard') {
+    const target = document.getElementById('pg-' + page);
+    if (target) target.classList.add('on');
+  }
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('on'));
+  item.classList.add('on');
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('show');
+  window.scrollTo(0, 0);
+});
