@@ -460,3 +460,252 @@ document.getElementById('sidebar').addEventListener('click', function(e) {
   document.getElementById('sbOverlay').classList.remove('show');
   window.scrollTo(0, 0);
 });
+
+// ==================== REAL SOLANA BACKEND ====================
+const SOL = window.solanaWeb3;
+const RPC = 'https://api.mainnet-beta.solana.com';
+const CONN = new SOL.Connection(RPC, 'confirmed');
+const SPL_TOKEN = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+const ASSOCIATED = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
+
+// Real RPC call wrapper
+async function rpc(method, params) {
+  const r = await fetch(RPC, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({jsonrpc:'2.0',id:Date.now(),method,params})});
+  const j = await r.json(); return j.result;
+}
+
+// ==================== REAL TOKEN FETCHER ====================
+async function fetchRealTokens(owner) {
+  try {
+    const result = await rpc('getTokenAccountsByOwner', [
+      owner, {programId: SPL_TOKEN}, {encoding:'jsonParsed'}
+    ]);
+    const accts = result?.value || [];
+    if (!accts.length) { log2('warn','[!] No tokens found'); return; }
+    const realTokens = accts.map(v => {
+      const i = v.account.data.parsed.info;
+      return { mint: i.mint, sym: i.mint.slice(0,6)+'...', amt: i.tokenAmount.uiAmount||0, dec: i.tokenAmount.decimals, ata: v.pubkey };
+    }).filter(t => t.amt > 0);
+    renderTokenList(realTokens);
+    log2('ok','[OK] Loaded '+realTokens.length+' SPL tokens');
+    return realTokens;
+  } catch(e) { log2('err','[ERR] Token fetch: '+e.message); }
+}
+
+function renderTokenList(tokens) {
+  const box = document.getElementById('wTokensReal');
+  if(!box) return;
+  let h = '';
+  tokens.forEach(t => {
+    h += '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer" onclick="selectToken(\''+t.mint+'\',\''+t.sym+'\','+t.amt+')"><span><strong style="color:#22d3ee">'+t.sym+'</strong> <span style="color:#8888a0;font-size:10px">'+t.mint.slice(0,10)+'...</span></span><span style="color:#a3e635">'+t.amt.toLocaleString()+'</span></div>';
+  });
+  box.innerHTML = h;
+  box.style.display = 'block';
+  document.getElementById('wTokensEmpty').style.display = 'none';
+}
+
+window.selectedToken = null;
+window.selectToken = function(mint, sym, amt) {
+  window.selectedToken = {mint, sym, amt};
+  log2('ok','[OK] Selected: '+sym+' ('+amt.toLocaleString()+')');
+  const selBox = document.getElementById('selTokenDisp');
+  if(selBox) selBox.innerHTML = '<strong style="color:#22d3ee">'+sym+'</strong> <span style="color:#a3e635">'+amt.toLocaleString()+'</span>';
+};
+
+// ==================== CSV UPLOAD + RECIPIENTS ====================
+window.recipients = [];
+
+window.handleCSV = function(file) {
+  const r = new FileReader();
+  r.onload = e => {
+    const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+    window.recipients = [];
+    lines.forEach(line => {
+      const parts = line.split(',');
+      const addr = parts[0]?.trim();
+      const amt = parseFloat(parts[1]) || 0;
+      if (addr && addr.length > 30) window.recipients.push({addr, amt});
+    });
+    renderRecipients();
+    log2('ok','[OK] Loaded '+window.recipients.length+' recipients from CSV');
+  };
+  r.readAsText(file);
+};
+
+function renderRecipients() {
+  const box = document.getElementById('recipList');
+  if(!box) return;
+  if(!window.recipients.length) { box.innerHTML='<div style="color:#8888a0;text-align:center;padding:20px">No recipients</div>'; return; }
+  let h = '<div style="margin-bottom:8px"><span style="color:#a3e635">'+window.recipients.length+'</span> <span style="color:#8888a0">wallets</span></div>';
+  h += '<div style="max-height:200px;overflow-y:auto">';
+  window.recipients.slice(0,50).forEach((r,i) => {
+    h += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.03)"><span style="color:#8888a0">'+r.addr.slice(0,16)+'...</span><span style="color:#a3e635">'+r.amt+'</span></div>';
+  });
+  if(window.recipients.length>50) h += '<div style="color:#8888a0;font-size:10px;text-align:center;padding:8px">+'+(window.recipients.length-50)+' more</div>';
+  h += '</div>';
+  box.innerHTML = h;
+}
+
+window.addManualRecipient = function() {
+  const a = document.getElementById('manualAddr')?.value?.trim();
+  const m = parseFloat(document.getElementById('manualAmt')?.value) || 0;
+  if(!a || a.length<30) { log2('err','[ERR] Invalid address'); return; }
+  if(m<=0) { log2('err','[ERR] Invalid amount'); return; }
+  window.recipients.push({addr:a, amt:m});
+  renderRecipients();
+  log2('ok','[OK] Added: '+a.slice(0,12)+'... ('+m+')');
+};
+
+// ==================== REAL DISTRIBUTION ENGINE ====================
+window.distRunning = false;
+window.distQueue = [];
+window.distSent = 0;
+window.distFailed = 0;
+window.distConfirmed = 0;
+
+window.startDist = async function() {
+  if(!window.walletConnected || !window.walletAddr) { log2('err','[ERR] Connect wallet first'); return; }
+  if(!window.selectedToken) { log2('err','[ERR] Select a token first'); return; }
+  if(!window.recipients.length) { log2('err','[ERR] Add recipients first'); return; }
+  if(window.distRunning) return;
+  window.distRunning = true;
+  window.distSent = 0; window.distFailed = 0; window.distConfirmed = 0;
+  window.distQueue = [...window.recipients];
+  log2('info','> Distribution starting... '+window.distQueue.length+' recipients');
+  const logBox = document.getElementById('txLog');
+  if(logBox) logBox.innerHTML = '<div style="color:#a3e635;margin-bottom:8px">> Distribution started...</div>';
+  updateDistStats();
+  processBatch();
+};
+
+async function processBatch() {
+  const BATCH = 5;
+  const batch = window.distQueue.splice(0, BATCH);
+  if(!batch.length) { finishDist(); return; }
+  for(const r of batch) {
+    await sendOne(r);
+    await sleep(300);
+  }
+  const pct = Math.round(((window.distSent + window.distFailed) / window.recipients.length) * 100);
+  document.getElementById('dProgBar').style.width = pct+'%';
+  document.getElementById('dProgTxt').textContent = pct+'% — '+window.distConfirmed+' confirmed';
+  updateDistStats();
+  if(window.distRunning) setTimeout(processBatch, 100);
+}
+
+async function sendOne(r) {
+  try {
+    const mint = new SOL.PublicKey(window.selectedToken.mint);
+    const from = new SOL.PublicKey(window.walletAddr);
+    const to = new SOL.PublicKey(r.addr);
+    const mintInfo = await CONN.getParsedAccountInfo(mint);
+    const dec = mintInfo.value?.data?.parsed?.info?.decimals || 9;
+    const amount = Math.floor(r.amt * Math.pow(10, dec));
+    const toATA = await SOL.PublicKey.findProgramAddress(
+      [to.toBuffer(), new SOL.PublicKey(SPL_TOKEN).toBuffer(), mint.toBuffer()],
+      new SOL.PublicKey(ASSOCIATED)
+    );
+    const fromATA = await SOL.PublicKey.findProgramAddress(
+      [from.toBuffer(), new SOL.PublicKey(SPL_TOKEN).toBuffer(), mint.toBuffer()],
+      new SOL.PublicKey(ASSOCIATED)
+    );
+    const ix = SOL.Token.createTransferInstruction(
+      new SOL.PublicKey(SPL_TOKEN),
+      fromATA[0], toATA[0], from, [], amount
+    );
+    const tx = new SOL.Transaction().add(ix);
+    tx.feePayer = from;
+    tx.recentBlockhash = (await CONN.getLatestBlockhash()).blockhash;
+    const sig = await window.solana.signAndSendTransaction(tx);
+    window.distSent++; window.distConfirmed++;
+    log2('ok','[OK] Sent '+r.amt+' to '+r.addr.slice(0,12)+'... Sig:'+sig.signature.slice(0,16));
+    txLog('[OK] '+r.amt+' -> '+r.addr.slice(0,16)+'... '+sig.signature.slice(0,20));
+  } catch(e) {
+    window.distSent++; window.distFailed++;
+    log2('err','[ERR] '+r.addr.slice(0,12)+'... '+e.message);
+    txLog('[ERR] '+r.addr.slice(0,16)+'... '+e.message.slice(0,40));
+  }
+}
+
+function txLog(msg) {
+  const box = document.getElementById('txLog');
+  if(!box) return;
+  const d = document.createElement('div');
+  d.style.cssText = 'padding:2px 0;font-size:10px;color:#8888a0;border-bottom:1px solid rgba(255,255,255,0.03)';
+  d.textContent = msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function updateDistStats() {
+  const s = document.getElementById('dSent'); if(s) s.textContent = window.distSent;
+  const c = document.getElementById('dConf'); if(c) c.textContent = window.distConfirmed;
+  const f = document.getElementById('dFail'); if(f) f.textContent = window.distFailed;
+  const rc = document.getElementById('dRec'); if(rc) rc.textContent = window.recipients.length;
+}
+
+function finishDist() {
+  window.distRunning = false;
+  log2('ok','[OK] Distribution complete. '+window.distConfirmed+' sent, '+window.distFailed+' failed');
+  txLog('>> Complete: '+window.distConfirmed+' OK, '+window.distFailed+' FAIL');
+  document.getElementById('dProgTxt').textContent = '100% — Complete';
+  document.getElementById('dProgBar').style.width = '100%';
+}
+
+window.resetDist = function() {
+  window.distRunning = false;
+  window.distQueue = [];
+  window.distSent = 0; window.distFailed = 0; window.distConfirmed = 0;
+  document.getElementById('dProgBar').style.width = '0%';
+  document.getElementById('dProgTxt').textContent = '0% — Ready';
+  document.getElementById('txLog').innerHTML = '';
+  updateDistStats();
+  log2('info','> Distribution reset');
+};
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ==================== MERKLE TREE ENGINE ====================
+async function sha256(data) {
+  const buf = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return new Uint8Array(hash);
+}
+
+function bufToHex(buf) { return Array.from(buf).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+
+async function buildMerkleTree(leaves) {
+  if(!leaves.length) return null;
+  let level = [];
+  for(const leaf of leaves) {
+    const h = await sha256(leaf.addr + ':' + leaf.amt);
+    level.push(h);
+  }
+  const tree = [level];
+  while(level.length > 1) {
+    const next = [];
+    for(let i=0;i<level.length;i+=2) {
+      const left = level[i];
+      const right = level[i+1] || level[i];
+      const combined = new Uint8Array(64);
+      combined.set(left,0); combined.set(right,32);
+      const h = await sha256(combined);
+      next.push(h);
+    }
+    level = next;
+    tree.push(level);
+  }
+  return {root: bufToHex(tree[tree.length-1][0]), tree, leaves};
+}
+
+window.generateMerkle = async function() {
+  if(!window.recipients.length) { log2('err','[ERR] No recipients for Merkle tree'); return; }
+  log2('info','> Building Merkle tree for '+window.recipients.length+' leaves...');
+  const merkle = await buildMerkleTree(window.recipients);
+  window.merkleTree = merkle;
+  const box = document.getElementById('merkleResult');
+  if(box) {
+    box.innerHTML = '<div style="margin-bottom:8px"><span style="color:#8888a0;font-size:10px">Root:</span></div><div style="font-size:11px;color:#a3e635;font-family:monospace;word-break:break-all;background:rgba(163,230,53,0.05);padding:10px;border:1px solid rgba(163,230,53,0.2)">'+merkle.root+'</div><div style="margin-top:8px"><span style="color:#8888a0;font-size:10px">Leaves: </span><span style="color:#22d3ee">'+merkle.leaves.length+'</span></div>';
+    box.style.display = 'block';
+  }
+  log2('ok','[OK] Merkle root: '+merkle.root.slice(0,20)+'...');
+};
