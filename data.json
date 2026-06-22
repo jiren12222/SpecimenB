@@ -1,0 +1,95 @@
+{
+  "user": {
+    "points": 3000,
+    "referral_code": "USER6E1SE7",
+    "invited": 0,
+    "joined": 0,
+    "earned_from_ref": 0
+  },
+  "milestones": [
+    {
+      "name": "Starter",
+      "points": 1500,
+      "desc": "Beginner badge unlocked",
+      "unlocked": true
+    },
+    {
+      "name": "Explorer",
+      "points": 5000,
+      "desc": "Early access badge",
+      "unlocked": false
+    },
+    {
+      "name": "Champion",
+      "points": 10000,
+      "desc": "Priority support",
+      "unlocked": false
+    },
+    {
+      "name": "Elite",
+      "points": 50000,
+      "desc": "Exclusive rewards",
+      "unlocked": false
+    },
+    {
+      "name": "Legend",
+      "points": 500000,
+      "desc": "VIP status",
+      "unlocked": false
+    }
+  ],
+  "quests": [
+    {
+      "name": "Follow X Account",
+      "desc": "Follow official X account",
+      "reward": 1500,
+      "completed": true,
+      "icon": "X"
+    },
+    {
+      "name": "Join Discord",
+      "desc": "Join the community Discord server",
+      "reward": 500,
+      "completed": false,
+      "icon": "D"
+    },
+    {
+      "name": "Share on X",
+      "desc": "Tweet about SpecimenB with hashtag",
+      "reward": 1000,
+      "completed": false,
+      "icon": "S"
+    },
+    {
+      "name": "Connect Wallet",
+      "desc": "Link your Solana wallet",
+      "reward": 800,
+      "completed": false,
+      "icon": "W"
+    },
+    {
+      "name": "First Distribution",
+      "desc": "Complete your first token distribution",
+      "reward": 2000,
+      "completed": false,
+      "icon": "T"
+    }
+  ],
+  "activities": [
+    {
+      "text": "Completed quest: Follow X Account",
+      "time": "2h ago",
+      "points": 1500
+    },
+    {
+      "text": "Milestone unlocked: Starter",
+      "time": "2h ago",
+      "points": 0
+    },
+    {
+      "text": "Account created",
+      "time": "1d ago",
+      "points": 100
+    }
+  ]
+}

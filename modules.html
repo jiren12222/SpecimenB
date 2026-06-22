@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpecimenB - Modules</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1a1a1a;
+            background: #0a0a0a;
+            position: fixed;
+            top: 0;
+            left: 80px;
+            right: 0;
+            z-index: 100;
+            height: 60px;
+        }
+        
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background: #b8d935;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            color: #0a0a0a;
+        }
+        
+        .top-bar-brand {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .top-bar-brand .name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f0f0f0;
+            letter-spacing: 1px;
+        }
+        
+        .top-bar-brand .tag {
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 80px;
+            height: 100vh;
+            background: #0a0a0a;
+            border-right: 1px solid #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0;
+            z-index: 200;
+        }
+        
+        .sidebar-logo {
+            width: 56px;
+            height: 56px;
+            background: #b8d935;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: #0a0a0a;
+            margin-bottom: 24px;
+            cursor: pointer;
+        }
+        
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .nav-item {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #111;
+            border: 1px solid #2a2a2a;
+            font-size: 20px;
+            position: relative;
+        }
+        
+        .nav-item:hover {
+            background: #1a1a1a;
+            border-color: #3a3a3a;
+        }
+        
+        .nav-item.active {
+            background: #b8d935;
+            border-color: #b8d935;
+            color: #0a0a0a;
+        }
+        
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            right: -12px;
+            width: 4px;
+            height: 24px;
+            background: #b8d935;
+            border-radius: 0 2px 2px 0;
+        }
+        
+        .main-content {
+            margin-left: 80px;
+            margin-top: 60px;
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .module-page {
+            display: none;
+        }
+        
+        .module-page.active {
+            display: block;
+        }
+        
+        .module-header {
+            margin-bottom: 24px;
+        }
+        
+        .module-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .module-desc {
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        
+        input, select, textarea {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #b8d935;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .btn {
+            background: #b8d935;
+            border: none;
+            color: #0a0a0a;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: #c8e535;
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn.secondary {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            color: #e0e0e0;
+        }
+        
+        .btn.secondary:hover {
+            background: #1a1a1a;
+            border-color: #3a3a3a;
+        }
+        
+        .result-box {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result-box.show {
+            display: block;
+        }
+        
+        .result-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #b8d935;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .result-content {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #4ecdc4;
+            max-height: 300px;
+            overflow-y: auto;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: #111;
+            border: 1px solid #2a2a2a;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #b8d935;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #333;
+            border-top-color: #b8d935;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .recipient-list {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .recipient-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 12px;
+        }
+        
+        .recipient-item:last-child {
+            border-bottom: none;
+        }
+        
+        .recipient-wallet {
+            color: #4ecdc4;
+            font-family: 'Courier New', monospace;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .recipient-amount {
+            color: #b8d935;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-logo" onclick="goHome()">SB</div>
+        <div class="sidebar-nav" id="sidebar-nav">
+            <div class="nav-item active" data-module="snapshot" onclick="switchModule('snapshot')" title="Snapshot Engine">🔍</div>
+            <div class="nav-item" data-module="allocation" onclick="switchModule('allocation')" title="Allocation">📊</div>
+            <div class="nav-item" data-module="fees" onclick="switchModule('fees')" title="Fee Optimizer">⚡</div>
+            <div class="nav-item" data-module="merkle" onclick="switchModule('merkle')" title="Merkle Claims">🌳</div>
+            <div class="nav-item" data-module="batch" onclick="switchModule('batch')" title="Batch Send">📤</div>
+            <div class="nav-item" data-module="csv" onclick="switchModule('csv')" title="CSV Import">📋</div>
+            <div class="nav-item" data-module="vesting" onclick="switchModule('vesting')" title="Vesting">⏰</div>
+            <div class="nav-item" data-module="analytics" onclick="switchModule('analytics')" title="Analytics">📈</div>
+        </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <div class="logo-box">SB</div>
+            <div class="top-bar-brand">
+                <div class="name">SpecimenB</div>
+                <div class="tag">System Modules</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        
+        <!-- SNAPSHOT ENGINE -->
+        <div class="module-page active" data-module="snapshot">
+            <div class="module-header">
+                <div class="module-title">🔍 Snapshot Engine</div>
+                <div class="module-desc">Capture holder states, filter by balance, blacklist addresses</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Min Balance (tokens)</label>
+                    <input type="number" id="snap-min" value="100">
+                </div>
+                <div class="form-group">
+                    <label>Max Balance (tokens)</label>
+                    <input type="number" id="snap-max" value="1000000">
+                </div>
+                <div class="form-group">
+                    <label>Blacklist Addresses</label>
+                    <textarea id="snap-blacklist" placeholder="9xJ2nX5k3..."></textarea>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="runSnapshot()">Run Snapshot</button>
+            
+            <div class="result-box" id="snap-result">
+                <div class="result-title">✓ Snapshot Results</div>
+                <div class="result-content" id="snap-content"></div>
+            </div>
+        </div>
+
+        <!-- ALLOCATION -->
+        <div class="module-page" data-module="allocation">
+            <div class="module-header">
+                <div class="module-title">📊 Allocation</div>
+                <div class="module-desc">Smart Distribution - Fixed, percentage, or proportional allocation models</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Allocation Mode</label>
+                    <select id="alloc-mode">
+                        <option value="fixed">Fixed</option>
+                        <option value="percent">Percent</option>
+                        <option value="proportional">Proportional</option>
+                        <option value="manual">Manual</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Recipients (wallet, amount)</label>
+                <textarea id="alloc-recipients" placeholder="7xKXtg2CWpdAa4zQmrqhvzgVHiCNqxTTosgAsU,1000
+9xJ2nX5k3ZaQmTpRsVwXyZaBcDeFgHiJkLmN,2000"></textarea>
+            </div>
+            
+            <button class="btn" onclick="calculateAllocation()">Calculate Allocation</button>
+            
+            <div class="result-box" id="alloc-result">
+                <div class="result-title">✓ Allocation Results</div>
+                <div class="result-content" id="alloc-content"></div>
+            </div>
+        </div>
+
+        <!-- FEE OPTIMIZER -->
+        <div class="module-page" data-module="fees">
+            <div class="module-header">
+                <div class="module-title">⚡ Fee Optimizer</div>
+                <div class="module-desc">Dynamic priority fee at 20th percentile, compute budget optimization</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Compute Budget (units)</label>
+                    <input type="number" id="fee-budget" value="200000">
+                </div>
+                <div class="form-group">
+                    <label>Transaction Count</label>
+                    <input type="number" id="fee-tx" value="100">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="optimizeFees()">Optimize Fees</button>
+            
+            <div class="result-box" id="fee-result">
+                <div class="result-title">✓ Fee Optimization</div>
+                <div class="result-content" id="fee-content"></div>
+            </div>
+        </div>
+
+        <!-- MERKLE CLAIMS -->
+        <div class="module-page" data-module="merkle">
+            <div class="module-header">
+                <div class="module-title">🌳 Merkle Claims</div>
+                <div class="module-desc">Gas-Optimized Merkle tree claims for massively scalable airdrops</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Recipients Count</label>
+                    <input type="number" id="merkle-count" value="1000" min="1">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="generateMerkle()">Generate Merkle Tree</button>
+            
+            <div class="result-box" id="merkle-result">
+                <div class="result-title">✓ Merkle Tree Generated</div>
+                <div class="result-content" id="merkle-content"></div>
+            </div>
+        </div>
+
+        <!-- BATCH SEND -->
+        <div class="module-page" data-module="batch">
+            <div class="module-header">
+                <div class="module-title">📤 Batch Send</div>
+                <div class="module-desc">Queue-based batch processing with parallel sending and retry</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Batch Size</label>
+                    <select id="batch-size">
+                        <option value="10">10 transactions</option>
+                        <option value="25">25 transactions</option>
+                        <option value="50">50 transactions</option>
+                        <option value="100">100 transactions</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Parallel Workers</label>
+                    <select id="batch-workers">
+                        <option value="2">2 workers</option>
+                        <option value="4" selected>4 workers</option>
+                        <option value="8">8 workers</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Retry Policy</label>
+                    <select id="batch-retry">
+                        <option value="auto">Auto-retry (3x)</option>
+                        <option value="manual">Manual</option>
+                        <option value="none">No retry</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Total Transactions</label>
+                    <input type="number" id="batch-tx" value="100">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="createBatch()">Create Batch</button>
+            
+            <div class="result-box" id="batch-result">
+                <div class="result-title">✓ Batch Created</div>
+                <div class="result-content" id="batch-content"></div>
+            </div>
+        </div>
+
+        <!-- CSV IMPORT -->
+        <div class="module-page" data-module="csv">
+            <div class="module-header">
+                <div class="module-title">📋 CSV Import</div>
+                <div class="module-desc">Bulk upload with CSV validation and deduplication</div>
+            </div>
+            
+            <div class="form-group">
+                <label>CSV Data (wallet, amount)</label>
+                <textarea id="csv-content" placeholder="wallet,amount
+7xKXtg2CWpdAa4zQmrqhvzgVHiCNqxTTosgAsU,1000
+9xJ2nX5k3ZaQmTpRsVwXyZaBcDeFgHiJkLmN,2000"></textarea>
+            </div>
+            
+            <button class="btn" onclick="parseCSV()">Parse & Validate</button>
+            
+            <div class="result-box" id="csv-result">
+                <div class="result-title">✓ CSV Parsed</div>
+                <div class="result-content" id="csv-content-result"></div>
+            </div>
+        </div>
+
+        <!-- VESTING -->
+        <div class="module-page" data-module="vesting">
+            <div class="module-header">
+                <div class="module-title">⏰ Vesting</div>
+                <div class="module-desc">Custom vesting schedules with linear or cliff unlock patterns</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Vesting Type</label>
+                    <select id="vest-type">
+                        <option value="linear">Linear</option>
+                        <option value="cliff">Cliff</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Cliff Period (months)</label>
+                    <input type="number" id="vest-cliff" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Vesting Period (months)</label>
+                    <input type="number" id="vest-period" value="12" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Total Amount</label>
+                    <input type="number" id="vest-amount" value="1000000">
+                </div>
+            </div>
+            
+            <button class="btn" onclick="createVesting()">Create Vesting</button>
+            
+            <div class="result-box" id="vest-result">
+                <div class="result-title">✓ Vesting Schedule Created</div>
+                <div class="result-content" id="vest-content"></div>
+            </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div class="module-page" data-module="analytics">
+            <div class="module-header">
+                <div class="module-title">📈 Analytics</div>
+                <div class="module-desc">Real-time transaction monitoring and distribution progress</div>
+            </div>
+            
+            <button class="btn" onclick="loadAnalytics()">Load Analytics</button>
+            
+            <div class="stat-grid" id="analytics-stats"></div>
+            
+            <div class="result-box" id="analytics-result">
+                <div class="result-title">✓ Analytics Data</div>
+                <div class="result-content" id="analytics-content"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        function switchModule(module) {
+            document.querySelectorAll('.module-page').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-module="${module}"].module-page`).classList.add('active');
+            document.querySelector(`[data-module="${module}"].nav-item`).classList.add('active');
+        }
+
+        function showResult(resultId, contentId, data) {
+            const resultBox = document.getElementById(resultId);
+            const contentBox = document.getElementById(contentId);
+            contentBox.textContent = JSON.stringify(data, null, 2);
+            resultBox.classList.add('show');
+        }
+
+        async function runSnapshot() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Processing...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/module/snapshot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        min_balance: parseInt(document.getElementById('snap-min').value),
+                        max_balance: parseInt(document.getElementById('snap-max').value),
+                        blacklist: document.getElementById('snap-blacklist').value
+                    })
+                });
+                const data = await res.json();
+                showResult('snap-result', 'snap-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function calculateAllocation() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Calculating...';
+            btn.disabled = true;
+
+            try {
+                const recipientText = document.getElementById('alloc-recipients').value;
+                const recipients = recipientText.split('\n')
+                    .map(line => {
+                        const [wallet, amount] = line.split(',');
+                        return { wallet: wallet.trim(), amount: parseFloat(amount) };
+                    })
+                    .filter(r => r.wallet && r.amount);
+
+                const res = await fetch('/api/module/allocation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        mode: document.getElementById('alloc-mode').value,
+                        recipients: recipients
+                    })
+                });
+                const data = await res.json();
+                showResult('alloc-result', 'alloc-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function optimizeFees() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Optimizing...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/module/fees', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        compute_budget: parseInt(document.getElementById('fee-budget').value),
+                        tx_count: parseInt(document.getElementById('fee-tx').value)
+                    })
+                });
+                const data = await res.json();
+                showResult('fee-result', 'fee-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function generateMerkle() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Generating...';
+            btn.disabled = true;
+
+            try {
+                const count = parseInt(document.getElementById('merkle-count').value);
+                const recipients = Array.from({length: count}, (_, i) => `wallet_${i}`);
+
+                const res = await fetch('/api/module/merkle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recipients })
+                });
+                const data = await res.json();
+                showResult('merkle-result', 'merkle-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function createBatch() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Creating...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/module/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        batch_size: parseInt(document.getElementById('batch-size').value),
+                        parallel_workers: parseInt(document.getElementById('batch-workers').value),
+                        retry_policy: document.getElementById('batch-retry').value,
+                        tx_count: parseInt(document.getElementById('batch-tx').value)
+                    })
+                });
+                const data = await res.json();
+                showResult('batch-result', 'batch-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function parseCSV() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Parsing...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/module/csv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        csv_content: document.getElementById('csv-content').value
+                    })
+                });
+                const data = await res.json();
+                showResult('csv-result', 'csv-content-result', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function createVesting() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Creating...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/module/vesting', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: document.getElementById('vest-type').value,
+                        cliff_months: parseInt(document.getElementById('vest-cliff').value),
+                        vesting_months: parseInt(document.getElementById('vest-period').value),
+                        total_amount: parseInt(document.getElementById('vest-amount').value)
+                    })
+                });
+                const data = await res.json();
+                showResult('vest-result', 'vest-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function loadAnalytics() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span>Loading...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/module/analytics');
+                const data = await res.json();
+
+                const statsHtml = `
+                    <div class="stat-card">
+                        <div class="stat-value">${data.analytics.total_transactions.toLocaleString()}</div>
+                        <div class="stat-label">Transactions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.analytics.success_rate}%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${(data.analytics.total_volume / 1000000).toFixed(1)}M</div>
+                        <div class="stat-label">Total Volume</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.analytics.avg_time_per_tx}s</div>
+                        <div class="stat-label">Avg Time/TX</div>
+                    </div>
+                `;
+                document.getElementById('analytics-stats').innerHTML = statsHtml;
+                showResult('analytics-result', 'analytics-content', data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

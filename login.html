@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In | SpecimenB</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { background: #111118; border: 1px solid #1a1a2e; border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 420px; text-align: center; }
+  .logo { font-size: 32px; font-weight: 700; color: #fff; letter-spacing: 2px; margin-bottom: 8px; }
+  .tagline { color: #666; font-size: 14px; margin-bottom: 40px; }
+  .divider { display: flex; align-items: center; gap: 16px; margin: 28px 0; color: #444; font-size: 12px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #1a1a2e; }
+  .guest-btn { width: 100%; background: transparent; color: #888; border: 1px solid #2a2a3e; padding: 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .guest-btn:hover { background: #1a1a2e; color: #fff; }
+  .footer { margin-top: 32px; font-size: 12px; color: #444; }
+  .footer a { color: #666; text-decoration: none; }
+  #error-msg { color: #ef4444; font-size: 13px; margin-top: 16px; min-height: 20px; }
+  .loading { display: none; color: #4ade80; font-size: 13px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <div class="logo">SPECIMENB</div>
+  <div class="tagline">Distribution made easy</div>
+  <div id="g_id_onload" data-client_id="YOUR_GOOGLE_CLIENT_ID" data-callback="handleGoogleSignIn" data-auto_prompt="false"></div>
+  <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left" data-width="340"></div>
+  <div class="divider">or</div>
+  <button class="guest-btn" onclick="continueGuest()">Continue as Guest</button>
+  <div id="error-msg"></div>
+  <div class="loading" id="loading">Signing in...</div>
+  <div class="footer">By signing in, you agree to our <a href="#">Terms</a> and <a href="#">Privacy</a></div>
+</div>
+<script>
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (data.logged_in) { window.location.href = '/'; }
+  } catch (e) {}
+}
+checkAuth();
+
+async function handleGoogleSignIn(response) {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('error-msg').textContent = '';
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: response.credential })
+    });
+    const data = await res.json();
+    if (data.success) {
+      localStorage.setItem('user', JSON.stringify(data));
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      window.location.href = ref ? '/?ref=' + ref : '/';
+    } else {
+      document.getElementById('error-msg').textContent = data.error || 'Sign in failed';
+      document.getElementById('loading').style.display = 'none';
+    }
+  } catch (e) {
+    document.getElementById('error-msg').textContent = 'Network error. Try again.';
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function continueGuest() {
+  localStorage.setItem('guest', 'true');
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  window.location.href = ref ? '/?ref=' + ref : '/';
+}
+</script>
+</body>
+</html>
