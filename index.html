@@ -104,7 +104,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overf
 </section>
 
 <section class="section" id="dashboard">
-  <h2 class="section-title">Create Airdrop</h2>
+  <h2 class="section-title">Create Distribution</h2>
   <p class="section-sub">Connect wallet, choose token, add recipients, execute.</p>
   <div class="dashboard">
     <h3>Distribution Dashboard</h3>
@@ -132,14 +132,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overf
       <label>Recipients</label>
       <div class="recipients-wrap">
         <textarea class="recipients-area" placeholder="Enter wallet addresses (one per line)&#10;Or upload CSV..."></textarea>
-        <button class="csv-tag" onclick="uploadCSV()">CSV</button><button class="csv-tag" onclick="getSnapshot()" style="right:4.5rem;background:var(--accent2)">Snapshot</button><button class="csv-tag" onclick="getSnapshot()" style="right:4.5rem;background:var(--accent2)">Snapshot</button>
+        <button class="csv-tag" onclick="uploadCSV()">CSV</button><button class="csv-tag" onclick="getSnapshot()" style="right:4.5rem;background:var(--accent2)">Snapshot</button>
       </div>
     </div>
     <div class="summary">
       <div class="summary-item"><span id="sumTotal">0</span><small>Total Amount</small></div>
       <div class="summary-item"><span id="sumRecipients">0</span><small>Recipients</small></div>
     </div>
-    <button class="execute-btn" onclick="executeAirdrop()">Execute Distribution</button>
+    <button class="execute-btn" onclick="executeDistribution()">Execute Distribution</button>
   </div>
   <div class="log-panel">
     <h4>// Transaction Log</h4>
@@ -177,12 +177,54 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overf
 </body>
 </html>
 <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+</body>
+</html>
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 <script>
 const HELIUS_KEY="3b40bb84-eb28-4b1e-9cdb-cc93fb602326";
 const HELIUS_RPC="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
 const TOKEN_MINT="DJmph94mWgKjkEvRF3y589BBPXunk9DnvahCcHo5Vray";
+let snapData=[],snapLimit=0,provider=null,connection=null,wallet=null;
 
-let wallet=null,connection=null,provider=null;
+function toggleSnapshot(){
+  const p=document.getElementById("snapshotPanel");
+  p.style.display=p.style.display==="none"?"block":"none";
+  document.querySelector("#snapshotModule h4").innerHTML=p.style.display==="none"?"Snapshot Engine ▾":"Snapshot Engine ▴";
+}
+
+function setTop(n,btn){
+  snapLimit=n;
+  document.querySelectorAll("#topBtns .mode-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+async function runSnapshot(){
+  const mint=document.getElementById("snapshotMint").value.trim()||TOKEN_MINT;
+  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:{mint:mint}};
+  try{
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await r.json();
+    let holders=data.result?.value||[];
+    if(snapLimit>0)holders=holders.slice(0,snapLimit);
+    snapData=holders;
+    let csv="wallet,amount\n";
+    holders.forEach(h=>{csv+=h.address+","+(h.uiAmount||0)+"\n";});
+    document.getElementById("snapCount").textContent="✓ "+holders.length+" holders snapped";
+    document.getElementById("snapResult").style.display="block";
+    window._snapCSV=csv;
+    console.log("Snapshot:",holders);
+  }catch(e){alert("Snapshot failed: "+e.message);console.error(e);}
+}
+
+function downloadCSV(){
+  if(!window._snapCSV){alert("Take snapshot first");return;}
+  const blob=new Blob([window._snapCSV],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="specimenb_snapshot_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+}
 
 async function initWallet(){
   if(window.solana&&window.solana.isPhantom){provider=window.solana;}
@@ -197,40 +239,17 @@ async function connectWallet(){
     const resp=await provider.connect();
     wallet=resp.publicKey.toString();
     document.querySelector(".wallet-btn").textContent=wallet.slice(0,4)+"..."+wallet.slice(-4);
-    await loadWalletTokens();
   }catch(e){console.error(e);}
-}
-
-async function loadWalletTokens(){
-  if(!wallet)return;
-  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
-  const body={jsonrpc:"2.0",id:"helius",method:"getAssetsByOwner",params:{ownerAddress:wallet,page:1,limit:100}};
-  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  const data=await r.json();
-  console.log("Wallet tokens:",data);
-}
-
-async function getSnapshot(){
-  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
-  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:{mint:TOKEN_MINT}};
-  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  const data=await r.json();
-  const holders=data.result?.value||[];
-  let csv="wallet,amount\n";
-  holders.forEach(h=>{csv+=h.address+","+h.uiAmount+"\n";});
-  document.querySelector(".recipients-area").value=csv;
-  document.getElementById("sumRecipients").textContent=holders.length;
-  console.log("Snapshot loaded:",holders.length,"holders");
 }
 
 async function executeAirdrop(){
   if(!wallet){alert("Connect wallet first");return;}
   const recipients=document.querySelector(".recipients-area").value.trim().split("\n");
-  if(recipients.length<2){alert("Add recipients first. Use Snapshot to auto-fill.");return;}
+  if(recipients.length<2){alert("Add recipients first. Use Snapshot module to auto-fill.");return;}
   const total=document.getElementById("totalAmount").value.replace(/,/g,"");
   const mode=document.querySelector(".mode-btn.active").textContent;
-  alert("Airdrop mode: "+mode+"\nTotal: "+total+" SPEC\nRecipients: "+(recipients.length-1)+"\n\nConfirm to execute on Solana Mainnet?");
-  console.log("Executing airdrop...",{mode,total,recipients});
+  alert("Distribution mode: "+mode+"\nTotal: "+total+" SPEC\nRecipients: "+(recipients.length-1)+"\n\nConfirm to execute on Solana Mainnet?");
+  console.log("Executing distribution...",{mode,total,recipients});
 }
 
 function uploadCSV(){const input=document.createElement("input");input.type="file";input.accept=".csv";input.onchange=e=>{const file=e.target.files[0];const reader=new FileReader();reader.onload=ev=>{document.querySelector(".recipients-area").value=ev.target.result;const lines=ev.target.result.trim().split("\n").length-1;document.getElementById("sumRecipients").textContent=lines;};reader.readAsText(file);};input.click();}
