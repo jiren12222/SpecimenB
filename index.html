@@ -132,14 +132,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overf
       <label>Recipients</label>
       <div class="recipients-wrap">
         <textarea class="recipients-area" placeholder="Enter wallet addresses (one per line)&#10;Or upload CSV..."></textarea>
-        <button class="csv-tag" onclick="uploadCSV()">CSV</button>
+        <button class="csv-tag" onclick="uploadCSV()">CSV</button><button class="csv-tag" onclick="getSnapshot()" style="right:4.5rem;background:var(--accent2)">Snapshot</button><button class="csv-tag" onclick="getSnapshot()" style="right:4.5rem;background:var(--accent2)">Snapshot</button>
       </div>
     </div>
     <div class="summary">
       <div class="summary-item"><span id="sumTotal">0</span><small>Total Amount</small></div>
       <div class="summary-item"><span id="sumRecipients">0</span><small>Recipients</small></div>
     </div>
-    <button class="execute-btn" onclick="execute()">Execute Distribution</button>
+    <button class="execute-btn" onclick="executeAirdrop()">Execute Distribution</button>
   </div>
   <div class="log-panel">
     <h4>// Transaction Log</h4>
@@ -172,19 +172,80 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overf
   <p style="margin-top:0.5rem">Built for Solana Mainnet</p>
 </div>
 
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+<script src="https://unpkg.com/@solana/wallet-adapter-base@latest/lib/index.iife.min.js"></script>
+</body>
+</html>
+<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 <script>
-const canvas=document.getElementById('particles'),ctx=canvas.getContext('2d');
+const HELIUS_KEY="3b40bb84-eb28-4b1e-9cdb-cc93fb602326";
+const HELIUS_RPC="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+const TOKEN_MINT="DJmph94mWgKjkEvRF3y589BBPXunk9DnvahCcHo5Vray";
+
+let wallet=null,connection=null,provider=null;
+
+async function initWallet(){
+  if(window.solana&&window.solana.isPhantom){provider=window.solana;}
+  else if(window.solflare){provider=window.solflare;}
+  else{alert("Install Phantom or Solflare wallet");return;}
+  connection=new solanaWeb3.Connection(HELIUS_RPC,"confirmed");
+}
+
+async function connectWallet(){
+  if(!provider)await initWallet();
+  try{
+    const resp=await provider.connect();
+    wallet=resp.publicKey.toString();
+    document.querySelector(".wallet-btn").textContent=wallet.slice(0,4)+"..."+wallet.slice(-4);
+    await loadWalletTokens();
+  }catch(e){console.error(e);}
+}
+
+async function loadWalletTokens(){
+  if(!wallet)return;
+  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+  const body={jsonrpc:"2.0",id:"helius",method:"getAssetsByOwner",params:{ownerAddress:wallet,page:1,limit:100}};
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await r.json();
+  console.log("Wallet tokens:",data);
+}
+
+async function getSnapshot(){
+  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:{mint:TOKEN_MINT}};
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await r.json();
+  const holders=data.result?.value||[];
+  let csv="wallet,amount\n";
+  holders.forEach(h=>{csv+=h.address+","+h.uiAmount+"\n";});
+  document.querySelector(".recipients-area").value=csv;
+  document.getElementById("sumRecipients").textContent=holders.length;
+  console.log("Snapshot loaded:",holders.length,"holders");
+}
+
+async function executeAirdrop(){
+  if(!wallet){alert("Connect wallet first");return;}
+  const recipients=document.querySelector(".recipients-area").value.trim().split("\n");
+  if(recipients.length<2){alert("Add recipients first. Use Snapshot to auto-fill.");return;}
+  const total=document.getElementById("totalAmount").value.replace(/,/g,"");
+  const mode=document.querySelector(".mode-btn.active").textContent;
+  alert("Airdrop mode: "+mode+"\nTotal: "+total+" SPEC\nRecipients: "+(recipients.length-1)+"\n\nConfirm to execute on Solana Mainnet?");
+  console.log("Executing airdrop...",{mode,total,recipients});
+}
+
+function uploadCSV(){const input=document.createElement("input");input.type="file";input.accept=".csv";input.onchange=e=>{const file=e.target.files[0];const reader=new FileReader();reader.onload=ev=>{document.querySelector(".recipients-area").value=ev.target.result;const lines=ev.target.result.trim().split("\n").length-1;document.getElementById("sumRecipients").textContent=lines;};reader.readAsText(file);};input.click();}
+
+function selectToken(){alert("Token selector - connect wallet to see your tokens");}
+
+document.querySelectorAll(".mode-btn").forEach(btn=>{btn.addEventListener("click",()=>{document.querySelectorAll(".mode-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");});});
+
+const canvas=document.getElementById("particles"),ctx=canvas.getContext("2d");
 canvas.width=window.innerWidth;canvas.height=window.innerHeight;
 const particles=[];for(let i=0;i<80;i++){particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2+0.5,dx:(Math.random()-0.5)*0.3,dy:(Math.random()-0.5)*0.3})}
-function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>canvas.width)p.dx*=-1;if(p.y<0||p.y>canvas.height)p.dy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,240,255,0.3)';ctx.fill()});
-for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=`rgba(0,240,255,${0.1*(1-dist/150)})`;ctx.stroke()}}}
+function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>canvas.width)p.dx*=-1;if(p.y<0||p.y>canvas.height)p.dy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle="rgba(0,240,255,0.3)";ctx.fill()});
+for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<150){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle="rgba(0,240,255,"+0.1*(1-dist/150)+")";ctx.stroke()}}}
 requestAnimationFrame(animate)}animate();
-window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight});
-function connectWallet(){alert('Wallet connection coming soon - Solana Mainnet')}
-function selectToken(){alert('Token selector coming soon')}
-function uploadCSV(){alert('CSV upload coming soon')}
-function execute(){alert('Distribution execution coming soon - Solana Mainnet')}
-document.querySelectorAll('.mode-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')})});
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight});
 </script>
 </body>
 </html>
