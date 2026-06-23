@@ -36,11 +36,11 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 .result-line.ok{color:var(--accent)}
 .result-line.err{color:#ef4444}
 .holder-count{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid rgba(255,255,255,0.05)}
-.holder-list{max-height:200px;overflow-y:auto;padding:0.8rem;background:rgba(0,0,0,0.2);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.7rem}
+.holder-list{max-height:300px;overflow-y:auto;padding:0.8rem;background:rgba(0,0,0,0.2);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.7rem}
 .holder-row{display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03)}
 .holder-row:last-child{border-bottom:none}
-.holder-addr{color:var(--muted);font-size:0.65rem}
-.holder-amt{color:var(--accent)}
+.holder-addr{color:var(--muted);font-size:0.65rem;word-break:break-all}
+.holder-amt{color:var(--accent);flex-shrink:0;margin-left:1rem}
 .download-btn{width:100%;padding:0.8rem;margin-top:1rem;background:transparent;border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.8rem;cursor:pointer;transition:all 0.3s}
 .download-btn:hover{background:rgba(0,240,255,0.08)}
 .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:0.5rem;animation:pulse 2s infinite}
@@ -100,6 +100,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 
 <script>
 const HELIUS_KEY="3b40bb84-eb28-4b1e-9cdb-cc93fb602326";
+const TOKEN_PROGRAM="TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 let snapLimit=0;
 let snapData=[];
 let totalHolders=0;
@@ -111,14 +112,55 @@ function setLimit(n,btn){
 }
 
 async function getTotalHolders(mint){
+  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+  const body={
+    jsonrpc:"2.0",
+    id:"helius",
+    method:"getProgramAccounts",
+    params:[
+      TOKEN_PROGRAM,
+      {
+        encoding:"jsonParsed",
+        filters:[
+          {dataSize:165},
+          {memcmp:{offset:0,bytes:mint}}
+        ]
+      }
+    ]
+  };
   try{
-    const r=await fetch("https://api.solscan.io/token/holders?tokenAddress="+mint+"&offset=0&limit=1");
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
     const data=await r.json();
-    if(data.success&&data.data&&data.data.total){
-      return data.data.total;
+    if(data.error){
+      console.log("getProgramAccounts error:",data.error);
+      return null;
     }
-  }catch(e){console.log("Solscan total failed, falling back");}
-  return null;
+    const accounts=data.result||[];
+    const uniqueOwners=new Set();
+    accounts.forEach(function(acc){
+      const parsed=acc.account?.data?.parsed?.info;
+      if(parsed&&parsed.owner&&parsed.tokenAmount?.uiAmount>0){
+        uniqueOwners.add(parsed.owner);
+      }
+    });
+    return uniqueOwners.size;
+  }catch(e){
+    console.log("getProgramAccounts failed:",e);
+    return null;
+  }
+}
+
+async function getTopHolders(mint,limit){
+  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:[mint]};
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await r.json();
+  if(data.error)throw new Error(data.error.message);
+  let holders=data.result?.value||[];
+  if(limit>0&&holders.length>limit){
+    holders=holders.slice(0,limit);
+  }
+  return holders;
 }
 
 async function takeSnapshot(){
@@ -131,20 +173,13 @@ async function takeSnapshot(){
   btn.disabled=true;
   dot.style.display='inline-block';
 
-  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
-  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:[mint]};
-
   try{
-    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-    const data=await r.json();
-    console.log("Helius response:",data);
+    const [holders,totalCount]=await Promise.all([
+      getTopHolders(mint,snapLimit),
+      getTotalHolders(mint)
+    ]);
 
-    if(data.error){
-      throw new Error(data.error.message||"API error");
-    }
-
-    let holders=data.result.value||[];
-    totalHolders=holders.length;
+    totalHolders=totalCount||holders.length;
 
     if(holders.length===0){
       document.getElementById('holderCount').textContent="Total holders: 0";
@@ -156,10 +191,6 @@ async function takeSnapshot(){
       return;
     }
 
-    if(snapLimit>0 && holders.length>snapLimit){
-      holders=holders.slice(0,snapLimit);
-    }
-
     snapData=holders;
 
     let listHTML="";
@@ -168,14 +199,15 @@ async function takeSnapshot(){
       listHTML+='<div class="holder-row"><span class="holder-addr">'+h.address+'</span><span class="holder-amt">'+amt+'</span></div>';
     });
 
-    document.getElementById('holderCount').textContent="Total on-chain holders: "+totalHolders+" | Showing: "+holders.length;
+    const countText=totalCount?"Total on-chain holders: "+totalCount+" | Showing: "+holders.length:"Showing: "+holders.length+" holders";
+    document.getElementById('holderCount').textContent=countText;
     document.getElementById('resultText').textContent="✓ Snapshot captured";
     document.getElementById('resultText').className="result-line ok";
     document.getElementById('resultSub').textContent="Mint: "+mint.slice(0,8)+"... | Limit: "+(snapLimit>0?"Top "+snapLimit:"All");
     document.getElementById('holderList').innerHTML=listHTML;
     document.getElementById('resultBox').classList.add('show');
 
-    console.log("Snapshot done:",holders.length,"holders");
+    console.log("Snapshot done:",holders.length,"holders, total:",totalCount);
 
   }catch(e){
     document.getElementById('holderCount').textContent="";
