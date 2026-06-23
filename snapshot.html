@@ -11,22 +11,18 @@
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
 #particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
 .top-bar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:rgba(10,10,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-.logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent);letter-spacing:2px;margin-right:3rem}
-.logo span{color:var(--text)}
+.back-link{color:var(--muted);text-decoration:none;font-size:0.8rem;font-family:'JetBrains Mono',monospace;transition:color 0.3s}
+.back-link:hover{color:var(--accent)}
 .nav-links{display:flex;gap:2.5rem;align-items:center}
 .nav-links a{color:var(--muted);text-decoration:none;font-size:0.85rem;font-weight:500;transition:color 0.3s}
 .nav-links a:hover{color:var(--accent)}
-.back-link{color:var(--muted);text-decoration:none;font-size:0.8rem;font-family:'JetBrains Mono',monospace;transition:color 0.3s}
-.back-link:hover{color:var(--accent)}
 .container{max-width:720px;margin:0 auto;padding:7rem 1.5rem 3rem;position:relative;z-index:1}
-.page-title{font-size:1.6rem;font-weight:700;margin-bottom:0.3rem;font-family:'Inter',sans-serif}
+.page-title{font-size:1.6rem;font-weight:700;margin-bottom:0.3rem}
 .page-sub{color:var(--muted);font-size:0.85rem;margin-bottom:2.5rem}
-.glass-box{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(8px);transition:border-color 0.3s}
-.glass-box:hover{border-color:rgba(0,240,255,0.15)}
+.glass-box{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(8px)}
 .label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:0.6rem;font-family:'JetBrains Mono',monospace}
 .input-field{width:100%;padding:0.9rem 1rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.8rem;outline:none;transition:border-color 0.3s}
 .input-field:focus{border-color:var(--accent)}
-.input-field::placeholder{color:var(--muted)}
 .top-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
 .top-chip{padding:0.5rem 1rem;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:0.75rem;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.3s}
 .top-chip:hover{border-color:var(--accent);color:var(--accent)}
@@ -49,7 +45,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:0.5rem;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .footer{text-align:center;padding:3rem 1.5rem;color:var(--muted);font-size:0.75rem;border-top:1px solid var(--border);position:relative;z-index:1;margin-top:3rem}
-@media(max-width:600px){.container{padding:6rem 1rem 2rem}.top-row{gap:0.4rem}.top-chip{padding:0.4rem 0.8rem;font-size:0.7rem}}
+@media(max-width:600px){.container{padding:6rem 1rem 2rem}}
 </style>
 </head>
 <body>
@@ -88,7 +84,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
       TAKE SNAPSHOT
     </button>
     <div class="result-area" id="resultBox">
-      <div class="result-line ok" id="resultText"></div>
+      <div class="result-line" id="resultText"></div>
       <div class="result-line" id="resultSub"></div>
       <div class="holder-list" id="holderList"></div>
       <button class="download-btn" onclick="downloadCSV()">⬇ DOWNLOAD CSV</button>
@@ -108,7 +104,7 @@ let snapCSV="";
 
 function setLimit(n,btn){
   snapLimit=n;
-  document.querySelectorAll('.top-chip').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.top-chip').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
 }
 
@@ -123,7 +119,6 @@ async function takeSnapshot(){
   dot.style.display='inline-block';
 
   const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
-  // FIX: params must be ARRAY [mint], not object {mint: ...}
   const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:[mint]};
 
   try{
@@ -135,7 +130,7 @@ async function takeSnapshot(){
       throw new Error(data.error.message||"API error");
     }
 
-    let holders=data.result?.value||[];
+    let holders=data.result.value||[];
     if(holders.length===0){
       document.getElementById('resultText').textContent="No holders found for this token.";
       document.getElementById('resultText').className="result-line err";
@@ -145,26 +140,25 @@ async function takeSnapshot(){
       return;
     }
 
-    // Apply top limit
     if(snapLimit>0 && holders.length>snapLimit){
       holders=holders.slice(0,snapLimit);
     }
 
     snapData=holders;
 
-    // Build CSV
     let csv="wallet,amount\n";
-    holders.forEach(h=>{csv+=h.address+","+(h.uiAmount||0)+"\n";});
+    holders.forEach(function(h){
+      csv+=h.address+","+(h.uiAmount||0)+"\n";
+    });
+    csv+="\n--- DO NOT EDIT THIS FILE. MESSING WITH ADDRESSES OR AMOUNTS WILL BREAK THE DISTRIBUTION ---\n";
     snapCSV=csv;
 
-    // Build preview list
     let listHTML="";
-    holders.forEach(h=>{
+    holders.forEach(function(h){
       const amt=parseFloat(h.uiAmount||0).toLocaleString('en-US',{maximumFractionDigits:4});
       listHTML+='<div class="holder-row"><span class="holder-addr" title="'+h.address+'">'+h.address.slice(0,6)+'...'+h.address.slice(-4)+'</span><span class="holder-amt">'+amt+'</span></div>';
     });
 
-    // Show results
     document.getElementById('resultText').textContent="✓ "+holders.length+" holders captured";
     document.getElementById('resultText').className="result-line ok";
     document.getElementById('resultSub').textContent="Mint: "+mint.slice(0,8)+"... | Limit: "+(snapLimit>0?"Top "+snapLimit:"All");
@@ -187,28 +181,24 @@ async function takeSnapshot(){
 }
 
 function downloadCSV(){
-  if(!snapData.length){alert("Take a snapshot first");return;}
+  if(!snapData.length){alert('Take a snapshot first');return;}
   let csv="wallet,amount\n";
   snapData.forEach(function(h){
     csv+=h.address+","+(h.uiAmount||0)+"\n";
   });
   csv+="\n--- DO NOT EDIT THIS FILE. MESSING WITH ADDRESSES OR AMOUNTS WILL BREAK THE DISTRIBUTION ---\n";
   const blob=new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="specimenb_snapshot_"+new Date().toISOString().slice(0,10)+".csv";
-  a.click();
-}
-  const blob=new Blob([snapCSV],{type:"text/csv"});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download="specimenb_snapshot_"+new Date().toISOString().slice(0,10)+".csv";
   a.click();
 }
 
-// Particle background
-const canvas=document.getElementById('particles'),ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+// Particles
+const canvas=document.getElementById('particles');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 const particles=[];
 for(let i=0;i<60;i++){
   particles.push({
@@ -221,8 +211,9 @@ for(let i=0;i<60;i++){
 }
 function animate(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  particles.forEach(p=>{
-    p.x+=p.dx;p.y+=p.dy;
+  particles.forEach(function(p){
+    p.x+=p.dx;
+    p.y+=p.dy;
     if(p.x<0||p.x>canvas.width)p.dx*=-1;
     if(p.y<0||p.y>canvas.height)p.dy*=-1;
     ctx.beginPath();
@@ -239,7 +230,7 @@ function animate(){
         ctx.beginPath();
         ctx.moveTo(particles[i].x,particles[i].y);
         ctx.lineTo(particles[j].x,particles[j].y);
-        ctx.strokeStyle='rgba(0,240,255,'+0.08*(1-dist/120)+')';
+        ctx.strokeStyle='rgba(0,240,255,'+(0.08*(1-dist/120))+')';
         ctx.stroke();
       }
     }
@@ -247,7 +238,7 @@ function animate(){
   requestAnimationFrame(animate);
 }
 animate();
-window.addEventListener('resize',()=>{
+window.addEventListener('resize',function(){
   canvas.width=window.innerWidth;
   canvas.height=window.innerHeight;
 });
