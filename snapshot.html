@@ -33,10 +33,17 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 .top-chip.active{border-color:var(--accent);background:rgba(0,240,255,0.08);color:var(--accent)}
 .action-btn{width:100%;padding:1rem;background:transparent;border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.3s;letter-spacing:1px}
 .action-btn:hover{background:rgba(0,240,255,0.08)}
+.action-btn:disabled{opacity:0.4;cursor:not-allowed}
 .result-area{margin-top:1.5rem;padding:1.2rem;background:transparent;border:1px solid var(--border);border-radius:8px;display:none}
 .result-area.show{display:block}
 .result-line{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem}
 .result-line.ok{color:var(--accent)}
+.result-line.err{color:#ef4444}
+.holder-list{max-height:200px;overflow-y:auto;margin-top:1rem;padding:0.8rem;background:rgba(0,0,0,0.2);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.7rem}
+.holder-row{display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.holder-row:last-child{border-bottom:none}
+.holder-addr{color:var(--muted);font-size:0.65rem}
+.holder-amt{color:var(--accent)}
 .download-btn{width:100%;padding:0.8rem;margin-top:1rem;background:transparent;border:1px solid var(--accent2);border-radius:8px;color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:0.8rem;cursor:pointer;transition:all 0.3s}
 .download-btn:hover{background:rgba(124,58,237,0.08)}
 .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:0.5rem;animation:pulse 2s infinite}
@@ -61,8 +68,8 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
   <p class="page-sub">Capture token holder states. Filter by balance. Export to CSV.</p>
 
   <div class="glass-box">
-    <div class="label">Token Mint Address</div>
-    <input type="text" class="input-field" id="mintInput" value="DJmph94mWgKjkEvRF3y589BBPXunk9DnvahCcHo5Vray" placeholder="Enter SPL token mint address...">
+    <div class="label">Token Contract Address (CA)</div>
+    <input type="text" class="input-field" id="mintInput" value="DJmph94mWgKjkEvRF3y589BBPXunk9DnvahCcHo5Vray" placeholder="Paste any Solana token mint address...">
   </div>
 
   <div class="glass-box">
@@ -76,12 +83,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
       <button class="top-chip" onclick="setLimit(500,this)">Top 500</button>
       <button class="top-chip active" onclick="setLimit(0,this)">All</button>
     </div>
-    <button class="action-btn" onclick="takeSnapshot()">
+    <button class="action-btn" id="snapBtn" onclick="takeSnapshot()">
       <span class="status-dot" id="snapDot" style="display:none"></span>
       TAKE SNAPSHOT
     </button>
     <div class="result-area" id="resultBox">
       <div class="result-line ok" id="resultText"></div>
+      <div class="result-line" id="resultSub"></div>
+      <div class="holder-list" id="holderList"></div>
       <button class="download-btn" onclick="downloadCSV()">⬇ DOWNLOAD CSV</button>
     </div>
   </div>
@@ -93,7 +102,9 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 
 <script>
 const HELIUS_KEY="3b40bb84-eb28-4b1e-9cdb-cc93fb602326";
-let snapLimit=0,snapData=[],window._snapCSV="";
+let snapLimit=0;
+let snapData=[];
+let snapCSV="";
 
 function setLimit(n,btn){
   snapLimit=n;
@@ -103,47 +114,132 @@ function setLimit(n,btn){
 
 async function takeSnapshot(){
   const mint=document.getElementById('mintInput').value.trim();
-  if(!mint){alert('Enter a token mint address');return;}
+  if(!mint){alert('Paste a token contract address first');return;}
+  if(mint.length<32){alert('Invalid Solana address. Must be 32-44 characters.');return;}
+
+  const btn=document.getElementById('snapBtn');
   const dot=document.getElementById('snapDot');
+  btn.disabled=true;
   dot.style.display='inline-block';
+
   const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
-  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:{mint:mint}};
+  // FIX: params must be ARRAY [mint], not object {mint: ...}
+  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:[mint]};
+
   try{
     const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
     const data=await r.json();
+    console.log("Helius response:",data);
+
+    if(data.error){
+      throw new Error(data.error.message||"API error");
+    }
+
     let holders=data.result?.value||[];
-    if(snapLimit>0)holders=holders.slice(0,snapLimit);
+    if(holders.length===0){
+      document.getElementById('resultText').textContent="No holders found for this token.";
+      document.getElementById('resultText').className="result-line err";
+      document.getElementById('resultSub').textContent="";
+      document.getElementById('holderList').innerHTML="";
+      document.getElementById('resultBox').classList.add('show');
+      return;
+    }
+
+    // Apply top limit
+    if(snapLimit>0 && holders.length>snapLimit){
+      holders=holders.slice(0,snapLimit);
+    }
+
     snapData=holders;
+
+    // Build CSV
     let csv="wallet,amount\n";
     holders.forEach(h=>{csv+=h.address+","+(h.uiAmount||0)+"\n";});
-    window._snapCSV=csv;
+    snapCSV=csv;
+
+    // Build preview list
+    let listHTML="";
+    holders.forEach(h=>{
+      const amt=parseFloat(h.uiAmount||0).toLocaleString('en-US',{maximumFractionDigits:4});
+      listHTML+='<div class="holder-row"><span class="holder-addr">'+h.address.slice(0,6)+'...'+h.address.slice(-4)+'</span><span class="holder-amt">'+amt+'</span></div>';
+    });
+
+    // Show results
     document.getElementById('resultText').textContent="✓ "+holders.length+" holders captured";
+    document.getElementById('resultText').className="result-line ok";
+    document.getElementById('resultSub').textContent="Mint: "+mint.slice(0,8)+"... | Limit: "+(snapLimit>0?"Top "+snapLimit:"All");
+    document.getElementById('holderList').innerHTML=listHTML;
     document.getElementById('resultBox').classList.add('show');
-    console.log("Snapshot:",holders);
+
+    console.log("Snapshot done:",holders.length,"holders");
+
   }catch(e){
-    alert("Snapshot failed: "+e.message);
+    document.getElementById('resultText').textContent="✗ Snapshot failed: "+e.message;
+    document.getElementById('resultText').className="result-line err";
+    document.getElementById('resultSub').textContent="Check the CA and try again.";
+    document.getElementById('holderList').innerHTML="";
+    document.getElementById('resultBox').classList.add('show');
     console.error(e);
   }finally{
+    btn.disabled=false;
     dot.style.display='none';
   }
 }
 
 function downloadCSV(){
-  if(!window._snapCSV){alert('Take snapshot first');return;}
-  const blob=new Blob([window._snapCSV],{type:"text/csv"});
+  if(!snapCSV){alert('Take a snapshot first');return;}
+  const blob=new Blob([snapCSV],{type:"text/csv"});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download="specimenb_snapshot_"+new Date().toISOString().slice(0,10)+".csv";
   a.click();
 }
 
+// Particle background
 const canvas=document.getElementById('particles'),ctx=canvas.getContext('2d');
 canvas.width=window.innerWidth;canvas.height=window.innerHeight;
-const particles=[];for(let i=0;i<60;i++){particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.5+0.5,dx:(Math.random()-0.5)*0.2,dy:(Math.random()-0.5)*0.2})}
-function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>canvas.width)p.dx*=-1;if(p.y<0||p.y>canvas.height)p.dy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,240,255,0.2)';ctx.fill()});
-for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle='rgba(0,240,255,'+0.08*(1-dist/120)+')';ctx.stroke()}}}
-requestAnimationFrame(animate)}animate();
-window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight});
+const particles=[];
+for(let i=0;i<60;i++){
+  particles.push({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    r:Math.random()*1.5+0.5,
+    dx:(Math.random()-0.5)*0.2,
+    dy:(Math.random()-0.5)*0.2
+  });
+}
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    p.x+=p.dx;p.y+=p.dy;
+    if(p.x<0||p.x>canvas.width)p.dx*=-1;
+    if(p.y<0||p.y>canvas.height)p.dy*=-1;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,240,255,0.2)';
+    ctx.fill();
+  });
+  for(let i=0;i<particles.length;i++){
+    for(let j=i+1;j<particles.length;j++){
+      const dx=particles[i].x-particles[j].x;
+      const dy=particles[i].y-particles[j].y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<120){
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x,particles[i].y);
+        ctx.lineTo(particles[j].x,particles[j].y);
+        ctx.strokeStyle='rgba(0,240,255,'+0.08*(1-dist/120)+')';
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+window.addEventListener('resize',()=>{
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+});
 </script>
 </body>
 </html>
