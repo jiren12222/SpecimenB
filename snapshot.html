@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snapshot Engine — SpecimenB</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--bg2:#0c0c14;--accent:#00f0ff;--accent2:#7c3aed;--text:#e2e8f0;--muted:#4a5568;--border:rgba(255,255,255,0.06);--glass:rgba(255,255,255,0.02)}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.top-bar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:rgba(10,10,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent);letter-spacing:2px;margin-right:3rem}
+.logo span{color:var(--text)}
+.nav-links{display:flex;gap:2.5rem;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.85rem;font-weight:500;transition:color 0.3s}
+.nav-links a:hover{color:var(--accent)}
+.back-link{color:var(--muted);text-decoration:none;font-size:0.8rem;font-family:'JetBrains Mono',monospace;transition:color 0.3s}
+.back-link:hover{color:var(--accent)}
+.container{max-width:720px;margin:0 auto;padding:7rem 1.5rem 3rem;position:relative;z-index:1}
+.page-title{font-size:1.6rem;font-weight:700;margin-bottom:0.3rem;font-family:'Inter',sans-serif}
+.page-sub{color:var(--muted);font-size:0.85rem;margin-bottom:2.5rem}
+.glass-box{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(8px);transition:border-color 0.3s}
+.glass-box:hover{border-color:rgba(0,240,255,0.15)}
+.label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:0.6rem;font-family:'JetBrains Mono',monospace}
+.input-field{width:100%;padding:0.9rem 1rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.8rem;outline:none;transition:border-color 0.3s}
+.input-field:focus{border-color:var(--accent)}
+.input-field::placeholder{color:var(--muted)}
+.top-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.top-chip{padding:0.5rem 1rem;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:0.75rem;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.3s}
+.top-chip:hover{border-color:var(--accent);color:var(--accent)}
+.top-chip.active{border-color:var(--accent);background:rgba(0,240,255,0.08);color:var(--accent)}
+.action-btn{width:100%;padding:1rem;background:transparent;border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.3s;letter-spacing:1px}
+.action-btn:hover{background:rgba(0,240,255,0.08)}
+.result-area{margin-top:1.5rem;padding:1.2rem;background:transparent;border:1px solid var(--border);border-radius:8px;display:none}
+.result-area.show{display:block}
+.result-line{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem}
+.result-line.ok{color:var(--accent)}
+.download-btn{width:100%;padding:0.8rem;margin-top:1rem;background:transparent;border:1px solid var(--accent2);border-radius:8px;color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:0.8rem;cursor:pointer;transition:all 0.3s}
+.download-btn:hover{background:rgba(124,58,237,0.08)}
+.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:0.5rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.footer{text-align:center;padding:3rem 1.5rem;color:var(--muted);font-size:0.75rem;border-top:1px solid var(--border);position:relative;z-index:1;margin-top:3rem}
+@media(max-width:600px){.container{padding:6rem 1rem 2rem}.top-row{gap:0.4rem}.top-chip{padding:0.4rem 0.8rem;font-size:0.7rem}}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<div class="top-bar">
+  <a href="index.html" class="back-link">← SPECIMENB</a>
+  <div class="nav-links">
+    <a href="index.html#dashboard">Dashboard</a>
+    <a href="index.html#modules">Modules</a>
+  </div>
+</div>
+
+<div class="container">
+  <h1 class="page-title">Snapshot Engine</h1>
+  <p class="page-sub">Capture token holder states. Filter by balance. Export to CSV.</p>
+
+  <div class="glass-box">
+    <div class="label">Token Mint Address</div>
+    <input type="text" class="input-field" id="mintInput" value="DJmph94mWgKjkEvRF3y589BBPXunk9DnvahCcHo5Vray" placeholder="Enter SPL token mint address...">
+  </div>
+
+  <div class="glass-box">
+    <div class="label">Top Holders</div>
+    <div class="top-row">
+      <button class="top-chip" onclick="setLimit(10,this)">Top 10</button>
+      <button class="top-chip" onclick="setLimit(20,this)">Top 20</button>
+      <button class="top-chip" onclick="setLimit(50,this)">Top 50</button>
+      <button class="top-chip" onclick="setLimit(100,this)">Top 100</button>
+      <button class="top-chip" onclick="setLimit(200,this)">Top 200</button>
+      <button class="top-chip" onclick="setLimit(500,this)">Top 500</button>
+      <button class="top-chip active" onclick="setLimit(0,this)">All</button>
+    </div>
+    <button class="action-btn" onclick="takeSnapshot()">
+      <span class="status-dot" id="snapDot" style="display:none"></span>
+      TAKE SNAPSHOT
+    </button>
+    <div class="result-area" id="resultBox">
+      <div class="result-line ok" id="resultText"></div>
+      <button class="download-btn" onclick="downloadCSV()">⬇ DOWNLOAD CSV</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <p>SpecimenB — Distribution Made Easy</p>
+</div>
+
+<script>
+const HELIUS_KEY="3b40bb84-eb28-4b1e-9cdb-cc93fb602326";
+let snapLimit=0,snapData=[],window._snapCSV="";
+
+function setLimit(n,btn){
+  snapLimit=n;
+  document.querySelectorAll('.top-chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function takeSnapshot(){
+  const mint=document.getElementById('mintInput').value.trim();
+  if(!mint){alert('Enter a token mint address');return;}
+  const dot=document.getElementById('snapDot');
+  dot.style.display='inline-block';
+  const url="https://mainnet.helius-rpc.com/?api-key="+HELIUS_KEY;
+  const body={jsonrpc:"2.0",id:"helius",method:"getTokenLargestAccounts",params:{mint:mint}};
+  try{
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await r.json();
+    let holders=data.result?.value||[];
+    if(snapLimit>0)holders=holders.slice(0,snapLimit);
+    snapData=holders;
+    let csv="wallet,amount\n";
+    holders.forEach(h=>{csv+=h.address+","+(h.uiAmount||0)+"\n";});
+    window._snapCSV=csv;
+    document.getElementById('resultText').textContent="✓ "+holders.length+" holders captured";
+    document.getElementById('resultBox').classList.add('show');
+    console.log("Snapshot:",holders);
+  }catch(e){
+    alert("Snapshot failed: "+e.message);
+    console.error(e);
+  }finally{
+    dot.style.display='none';
+  }
+}
+
+function downloadCSV(){
+  if(!window._snapCSV){alert('Take snapshot first');return;}
+  const blob=new Blob([window._snapCSV],{type:"text/csv"});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download="specimenb_snapshot_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+}
+
+const canvas=document.getElementById('particles'),ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+const particles=[];for(let i=0;i<60;i++){particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.5+0.5,dx:(Math.random()-0.5)*0.2,dy:(Math.random()-0.5)*0.2})}
+function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>canvas.width)p.dx*=-1;if(p.y<0||p.y>canvas.height)p.dy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,240,255,0.2)';ctx.fill()});
+for(let i=0;i<particles.length;i++){for(let j=i+1;j<particles.length;j++){const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle='rgba(0,240,255,'+0.08*(1-dist/120)+')';ctx.stroke()}}}
+requestAnimationFrame(animate)}animate();
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight});
+</script>
+</body>
+</html>
