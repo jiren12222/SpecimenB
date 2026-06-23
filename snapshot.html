@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--bg2:#0c0c14;--accent:#00f0ff;--accent2:#7c3aed;--text:#e2e8f0;--muted:#4a5568;--border:rgba(255,255,255,0.06);--glass:rgba(255,255,255,0.02)}
+:root{--bg:#0a0a0f;--accent:#00f0ff;--text:#e2e8f0;--muted:#4a5568;--border:rgba(255,255,255,0.06);--glass:rgba(255,255,255,0.02)}
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
 #particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
 .top-bar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:rgba(10,10,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
@@ -19,7 +19,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 .container{max-width:720px;margin:0 auto;padding:7rem 1.5rem 3rem;position:relative;z-index:1}
 .page-title{font-size:1.6rem;font-weight:700;margin-bottom:0.3rem}
 .page-sub{color:var(--muted);font-size:0.85rem;margin-bottom:2.5rem}
-.glass-box{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(8px)}
+.glass-box{background:var(--glass);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.2rem}
 .label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:0.6rem;font-family:'JetBrains Mono',monospace}
 .input-field{width:100%;padding:0.9rem 1rem;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.8rem;outline:none;transition:border-color 0.3s}
 .input-field:focus{border-color:var(--accent)}
@@ -35,13 +35,14 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 .result-line{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:0.3rem}
 .result-line.ok{color:var(--accent)}
 .result-line.err{color:#ef4444}
-.holder-list{max-height:200px;overflow-y:auto;margin-top:1rem;padding:0.8rem;background:rgba(0,0,0,0.2);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.7rem}
+.holder-count{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:0.8rem;padding-bottom:0.8rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+.holder-list{max-height:200px;overflow-y:auto;padding:0.8rem;background:rgba(0,0,0,0.2);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.7rem}
 .holder-row{display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid rgba(255,255,255,0.03)}
 .holder-row:last-child{border-bottom:none}
 .holder-addr{color:var(--muted);font-size:0.65rem}
 .holder-amt{color:var(--accent)}
-.download-btn{width:100%;padding:0.8rem;margin-top:1rem;background:transparent;border:1px solid var(--accent2);border-radius:8px;color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:0.8rem;cursor:pointer;transition:all 0.3s}
-.download-btn:hover{background:rgba(124,58,237,0.08)}
+.download-btn{width:100%;padding:0.8rem;margin-top:1rem;background:transparent;border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:0.8rem;cursor:pointer;transition:all 0.3s}
+.download-btn:hover{background:rgba(0,240,255,0.08)}
 .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:0.5rem;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 .footer{text-align:center;padding:3rem 1.5rem;color:var(--muted);font-size:0.75rem;border-top:1px solid var(--border);position:relative;z-index:1;margin-top:3rem}
@@ -84,6 +85,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
       TAKE SNAPSHOT
     </button>
     <div class="result-area" id="resultBox">
+      <div class="holder-count" id="holderCount"></div>
       <div class="result-line" id="resultText"></div>
       <div class="result-line" id="resultSub"></div>
       <div class="holder-list" id="holderList"></div>
@@ -100,7 +102,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 const HELIUS_KEY="3b40bb84-eb28-4b1e-9cdb-cc93fb602326";
 let snapLimit=0;
 let snapData=[];
-let snapCSV="";
+let totalHolders=0;
 
 function setLimit(n,btn){
   snapLimit=n;
@@ -131,7 +133,10 @@ async function takeSnapshot(){
     }
 
     let holders=data.result.value||[];
+    totalHolders=holders.length;
+
     if(holders.length===0){
+      document.getElementById('holderCount').textContent="Total holders: 0";
       document.getElementById('resultText').textContent="No holders found for this token.";
       document.getElementById('resultText').className="result-line err";
       document.getElementById('resultSub').textContent="";
@@ -146,20 +151,14 @@ async function takeSnapshot(){
 
     snapData=holders;
 
-    let csv="wallet,amount\n";
-    holders.forEach(function(h){
-      csv+='"'"'"'"'+h.address+'"'"'"'"'+","+(h.uiAmount||0)+"\n";
-    });
-    csv+="\n--- DO NOT EDIT THIS FILE. MESSING WITH ADDRESSES OR AMOUNTS WILL BREAK THE DISTRIBUTION ---\n";
-    snapCSV=csv;
-
     let listHTML="";
     holders.forEach(function(h){
       const amt=parseFloat(h.uiAmount||0).toLocaleString('en-US',{maximumFractionDigits:4});
-      listHTML+='<div class="holder-row"><span class="holder-addr" title="'+h.address+'">'+h.address.slice(0,6)+'...'+h.address.slice(-4)+'</span><span class="holder-amt">'+amt+'</span></div>';
+      listHTML+='<div class="holder-row"><span class="holder-addr" title="'+h.address+'">'+h.address+'</span><span class="holder-amt">'+amt+'</span></div>';
     });
 
-    document.getElementById('resultText').textContent="✓ "+holders.length+" holders captured | Total: "+(data.result.value.length)+" total";
+    document.getElementById('holderCount').textContent="Total holders on-chain: "+totalHolders+" | Showing: "+holders.length;
+    document.getElementById('resultText').textContent="✓ Snapshot captured";
     document.getElementById('resultText').className="result-line ok";
     document.getElementById('resultSub').textContent="Mint: "+mint.slice(0,8)+"... | Limit: "+(snapLimit>0?"Top "+snapLimit:"All");
     document.getElementById('holderList').innerHTML=listHTML;
@@ -168,6 +167,7 @@ async function takeSnapshot(){
     console.log("Snapshot done:",holders.length,"holders");
 
   }catch(e){
+    document.getElementById('holderCount').textContent="";
     document.getElementById('resultText').textContent="✗ Snapshot failed: "+e.message;
     document.getElementById('resultText').className="result-line err";
     document.getElementById('resultSub').textContent="Check the CA and try again.";
@@ -184,9 +184,9 @@ function downloadCSV(){
   if(!snapData.length){alert('Take a snapshot first');return;}
   let csv="wallet,amount\n";
   snapData.forEach(function(h){
-    csv+='"'"'"'"'+h.address+'"'"'"'"'+","+(h.uiAmount||0)+"\n";
+    csv=csv+'"'+h.address+'",'+(h.uiAmount||0)+"\n";
   });
-  csv+="\n--- DO NOT EDIT THIS FILE. MESSING WITH ADDRESSES OR AMOUNTS WILL BREAK THE DISTRIBUTION ---\n";
+  csv=csv+"\n--- DO NOT EDIT THIS FILE. MESSING WITH ADDRESSES OR AMOUNTS WILL BREAK THE DISTRIBUTION ---\n";
   const blob=new Blob([csv],{type:"text/csv"});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -194,7 +194,6 @@ function downloadCSV(){
   a.click();
 }
 
-// Particles
 const canvas=document.getElementById('particles');
 const ctx=canvas.getContext('2d');
 canvas.width=window.innerWidth;
